@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💸 Conversor de Precios Extranjeros</title>
+<style>
+body {
+  font-family: 'Orbitron', sans-serif;
+  background: radial-gradient(circle at center, #000 0%, #050505 100%);
+  color: #00ffff;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+header {
+  width: 100%;
+  text-align: center;
+  padding: 1.5rem 0;
+  background: linear-gradient(90deg,#ff00ff,#00ffff,#00ff00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 2rem;
+  font-weight: bold;
+  animation: glow 4s ease-in-out infinite;
+}
+@keyframes glow {
+  0%,100% { filter: drop-shadow(0 0 6px #ff00ff); }
+  50% { filter: drop-shadow(0 0 25px #00ffff); }
+}
+.container {
+  width: 90%;
+  max-width: 650px;
+  background: rgba(10,10,10,0.9);
+  border: 2px solid #00ffff;
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(0,255,255,0.5);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+textarea {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  border: 2px solid #00ffff;
+  background: #111;
+  color: #0ff;
+  font-family: monospace;
+  padding: 0.8rem;
+  font-size: 1rem;
+  resize: none;
+  outline: none;
+}
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #fff;
+}
+.search-box {
+  position: relative;
+  margin-top: 1rem;
+}
+#buscador {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 10px;
+  border: 2px solid #00ffff;
+  background: #111;
+  color: #0ff;
+  font-size: 1rem;
+}
+.lista-paises {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #00ffff;
+  border-radius: 10px;
+  margin-top: 0.5rem;
+  background: #0b0b0b;
+}
+.pais {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pais:hover {
+  background: rgba(0,255,255,0.2);
+}
+.pais img {
+  width: 24px;
+  height: 16px;
+  border-radius: 3px;
+}
+button {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg,#ff00ff,#00ffff);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #00ffff, 0 0 40px #ff00ff;
+}
+#resultado {
+  margin-top: 1.5rem;
+  background: #050505;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid #0ff;
+  color: #0f0;
+  white-space: pre-wrap;
+}
+footer {
+  color: #777;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+</style>
+</head>
+<body>
+
+<header>🌎 Conversor de Precios Extranjeros</header>
+
+<div class="container">
+  <label for="precios">Introduce tus precios extranjeros 🎯</label>
+  <textarea id="precios" placeholder="✅1 día x 5 dólares
+✅7 días x 10 dólares
+✅15 días x 20 dólares
+✅30 días x 30 dólares"></textarea>
+
+  <label>Selecciona el país destino</label>
+  <div class="search-box">
+    <input type="text" id="buscador" placeholder="Buscar país...">
+    <div class="lista-paises" id="lista"></div>
+  </div>
+
+  <button id="convertir">Convertir al peso del país seleccionado</button>
+
+  <div id="resultado">Aquí aparecerá el resultado convertido...</div>
+</div>
+
+<footer>Desarrollado por Luck Xit ⚡</footer>
+
+<script>
+const API_KEY = "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";
+
+// Lista de países con su bandera y moneda
+const paises = [
+  { nombre: "Colombia", moneda: "COP", bandera: "https://flagcdn.com/w20/co.png" },
+  { nombre: "México", moneda: "MXN", bandera: "https://flagcdn.com/w20/mx.png" },
+  { nombre: "Argentina", moneda: "ARS", bandera: "https://flagcdn.com/w20/ar.png" },
+  { nombre: "Chile", moneda: "CLP", bandera: "https://flagcdn.com/w20/cl.png" },
+  { nombre: "Perú", moneda: "PEN", bandera: "https://flagcdn.com/w20/pe.png" },
+  { nombre: "Venezuela", moneda: "VES", bandera: "https://flagcdn.com/w20/ve.png" },
+  { nombre: "Ecuador", moneda: "USD", bandera: "https://flagcdn.com/w20/ec.png" },
+  { nombre: "Brasil", moneda: "BRL", bandera: "https://flagcdn.com/w20/br.png" },
+  { nombre: "España", moneda: "EUR", bandera: "https://flagcdn.com/w20/es.png" },
+  { nombre: "Estados Unidos", moneda: "USD", bandera: "https://flagcdn.com/w20/us.png" },
+  { nombre: "Uruguay", moneda: "UYU", bandera: "https://flagcdn.com/w20/uy.png" },
+  { nombre: "Paraguay", moneda: "PYG", bandera: "https://flagcdn.com/w20/py.png" },
+  { nombre: "Bolivia", moneda: "BOB", bandera: "https://flagcdn.com/w20/bo.png" },
+  { nombre: "Panamá", moneda: "USD", bandera: "https://flagcdn.com/w20/pa.png" },
+  { nombre: "Costa Rica", moneda: "CRC", bandera: "https://flagcdn.com/w20/cr.png" },
+  { nombre: "República Dominicana", moneda: "DOP", bandera: "https://flagcdn.com/w20/do.png" }
+];
+
+const listaDiv = document.getElementById("lista");
+const buscador = document.getElementById("buscador");
+let paisSeleccionado = paises[0]; // Por defecto Colombia
+
+// Mostrar lista de países
+function renderLista(filtro = "") {
+  listaDiv.innerHTML = "";
+  paises
+    .filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
+    .forEach(p => {
+      const div = document.createElement("div");
+      div.className = "pais";
+      div.innerHTML = `<img src="${p.bandera}"> ${p.nombre} (${p.moneda})`;
+      div.onclick = () => {
+        paisSeleccionado = p;
+        buscador.value = `${p.nombre} (${p.moneda})`;
+        listaDiv.innerHTML = "";
+      };
+      listaDiv.appendChild(div);
+    });
+}
+buscador.addEventListener("input", e => renderLista(e.target.value));
+renderLista();
+
+// Botón de conversión
+document.getElementById("convertir").addEventListener("click", async () => {
+  const texto = document.getElementById("precios").value.trim();
+  if (!texto) return alert("Por favor ingresa tus precios.");
+
+  const monedaDestino = paisSeleccionado.moneda;
+
+  const res = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+  const data = await res.json();
+  const tasa = data.rates[monedaDestino];
+
+  if (!tasa) {
+    document.getElementById("resultado").textContent = 
+      `⚠️ No se encontró tasa de cambio para ${paisSeleccionado.nombre} (${monedaDestino}).`;
+    return;
+  }
+
+  const regex = /(\d+(?:[\.,]\d+)?)\s*(?:dólares?|usd?)/gi;
+  let nuevoTexto = texto.replace(regex, (match, num) => {
+    const valor = parseFloat(num.replace(",", "."));
+    const convertido = (valor * tasa).toLocaleString("es-CO", { minimumFractionDigits: 2 });
+    return `${convertido} ${monedaDestino}`;
+  });
+
+  document.getElementById("resultado").textContent = 
+    `💱 Conversión al peso de ${paisSeleccionado.nombre} (${monedaDestino}):\n\n` + nuevoTexto;
+});
+</script>
+
+</body>
+</html>
