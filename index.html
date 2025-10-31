@@ -7,62 +7,61 @@
   <title>Xits Socios - Inicio</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* Mantengo tu estilo original (header, posts) */
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 70px; }
-    .header {
-      position: fixed; top:0; left:0; width:100%; background: linear-gradient(to right,#0072ff,#00c6ff); color:#fff;
-      padding: 10px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:100;
-    }
-    .header h1 { font-size:1.3em; margin:0; }
-    .user-info { display:flex; align-items:center; gap:12px; }
-    .info-item { font-weight:600; font-size:0.95em; }
-    .logout-btn { background: #d9534f; color:#fff; border:0; padding:6px 10px; border-radius:6px; cursor:pointer; }
-    .logout-btn:hover { background:#c9302c; }
-
-    .container { max-width:1000px; margin:20px auto; padding: 0 20px; }
-    .loading { text-align:center; padding:50px; font-size:1.2em; color:#555; }
-
-    .post { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.08); margin-bottom:22px; overflow:hidden; }
-    .post-image { width:100%; height:200px; object-fit:cover; }
-    .post-content { padding:14px; }
-    .post-content h2 { margin:0 0 6px; color:#0072ff; font-size:1.3em; }
-    .view-btn { background:#f0ad4e; color:white; padding:10px; border-radius:6px; border:0; width:100%; cursor:pointer; }
-    .options-container { display:none; margin-top:12px; padding:10px; border:1px solid #ddd; border-radius:6px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-    .option-button { background:#5cb85c; color:white; padding:8px 12px; border-radius:6px; border:0; cursor:pointer; }
-
-    /* Botón superior derecho para cerrar sesión y mostrar usuario */
-    .top-right { position: absolute; right: 14px; top: 10px; display:flex; gap:10px; align-items:center; }
-    .username-span { font-weight:700; color:#fff; background:rgba(255,255,255,0.08); padding:6px 10px; border-radius:8px; }
-
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f4f7f6; margin:0; padding-top:70px; }
+    .header { position:fixed; top:0; left:0; width:100%; background:linear-gradient(to right,#0072ff,#00c6ff); color:#fff; padding:10px 15px; box-shadow:0 2px 10px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:100;}
+    .header h1{font-size:1.3em;margin:0;}
+    .top-right{display:flex; align-items:center; gap:10px;}
+    .username-span{font-weight:700; color:#fff; background:rgba(255,255,255,0.08); padding:6px 10px; border-radius:8px;}
+    .logout-btn{background:#d9534f;color:#fff;border:0;padding:6px 10px;border-radius:6px;cursor:pointer;}
+    .container{max-width:1000px;margin:20px auto;padding:0 20px;}
+    .loading{ text-align:center; padding:50px; font-size:1.2em; color:#555; }
+    .post{ background:#fff; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.08); margin-bottom:22px; overflow:hidden; }
+    .post-image{ width:100%; height:200px; object-fit:cover; }
+    .post-content{ padding:14px; }
+    .post-content h2{ margin:0 0 6px; color:#0072ff; font-size:1.3em; }
+    .view-btn{ background:#f0ad4e; color:#fff; padding:10px; border-radius:6px; border:0; width:100%; cursor:pointer; }
+    .options-container{ display:none; margin-top:12px; padding:10px; border:1px solid #ddd; border-radius:6px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+    .option-button{ background:#5cb85c; color:#fff; padding:8px 12px; border-radius:6px; border:0; cursor:pointer; }
     @media (max-width:600px){ body{padding-top:90px;} .header{flex-direction:column;align-items:flex-start;} }
+    /* modal simple */
+    .modal { position: fixed; inset: 0; display: none; align-items:center; justify-content:center; background: rgba(0,0,0,0.5); z-index:9999; }
+    .modal .card { background:#fff; padding:20px; border-radius:10px; width:90%; max-width:420px; text-align:center; }
+    .btn-close { background:#0072ff; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
   </style>
 </head>
 <body>
-  <!-- Control de sesión: si no hay sesión válida, redirige al login -->
+  <!-- sesión -->
   <script>
-    // Verificar sesión: currentUser en localStorage
-    const cu = localStorage.getItem('currentUser');
-    if (!cu) { window.location.href = 'login.html'; }
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) { window.location.href = 'login.html'; }
   </script>
 
   <div class="header">
     <h1>Xits Socios</h1>
-    <div style="display:flex; align-items:center;">
-      <div class="top-right">
-        <span class="username-span" id="display-username">Cargando...</span>
-        <span class="info-item" id="display-balance">Saldo: $0.00</span>
-        <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
-      </div>
+    <div class="top-right">
+      <span class="username-span" id="display-username">Cargando...</span>
+      <span id="display-balance" style="font-weight:700; color:#fff;">Saldo: $0.00</span>
+      <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
     </div>
   </div>
 
-  <div class="container" id="posts-container">
-    <div class="loading">Cargando publicaciones...</div>
+  <div class="container" id="posts-container"><div class="loading">Cargando publicaciones...</div></div>
+
+  <!-- Modal para mostrar key -->
+  <div id="modal" class="modal">
+    <div class="card">
+      <h3>Key entregada</h3>
+      <p id="modal-key" style="word-break:break-all; font-weight:700;"></p>
+      <p id="modal-info"></p>
+      <button class="btn-close" onclick="closeModal()">Cerrar</button>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import {
+      getFirestore, collection, getDocs, doc, getDoc, updateDoc, addDoc
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
@@ -72,44 +71,42 @@
       messagingSenderId: "364183519851",
       appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     const currentUser = localStorage.getItem('currentUser');
-    const currentUserId = localStorage.getItem('currentUserId'); // puede existir si se guardó en login
-    const postsContainer = document.getElementById('posts-container');
+    const currentUserId = localStorage.getItem('currentUserId');
+
     const displayUsername = document.getElementById('display-username');
     const displayBalance = document.getElementById('display-balance');
+    const postsContainer = document.getElementById('posts-container');
 
-    // Cargar datos de usuario (by username or by id)
     async function loadUserInfo() {
       try {
         if (currentUserId) {
-          const udoc = await getDoc(doc(db, 'users', currentUserId));
-          if (udoc.exists()) {
-            const d = udoc.data();
+          const uSnap = await getDoc(doc(db, 'users', currentUserId));
+          if (uSnap.exists()) {
+            const d = uSnap.data();
             displayUsername.textContent = d.username || currentUser;
             displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo||0)).toFixed(2)} USD`;
             return;
           }
         }
-        // fallback: buscar por username
+        // fallback: search by username
         const usersCol = collection(db, 'users');
-        const allUsers = await getDocs(usersCol);
-        allUsers.forEach(u => {
-          const d = u.data();
-          if (d.username === currentUser) {
-            displayUsername.textContent = d.username;
-            displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo||0)).toFixed(2)} USD`;
+        const snap = await getDocs(usersCol);
+        snap.forEach(d => {
+          const data = d.data();
+          if (data.username === currentUser) {
+            displayUsername.textContent = data.username;
+            displayBalance.textContent = `Saldo: $${(parseFloat(data.saldo||0)).toFixed(2)} USD`;
+            localStorage.setItem('currentUserId', d.id);
           }
         });
-      } catch (err) {
-        console.error('Error loading user info', err);
-        displayUsername.textContent = currentUser;
-      }
+      } catch (err) { console.error('Error cargando usuario', err); displayUsername.textContent = currentUser; }
     }
 
-    // Cargar posts
     async function loadPosts() {
       postsContainer.innerHTML = '';
       try {
@@ -132,8 +129,8 @@
     function createPostHTML(id, post) {
       let optionsHTML = '';
       if (post.options && Array.isArray(post.options) && post.options.length) {
-        post.options.forEach(opt => {
-          optionsHTML += `<button class="option-button" onclick="buyService('${escapeHtml(post.title)}', ${Number(opt.precio)}, '${escapeHtml(opt.uso)}', '${id}')">$${Number(opt.precio).toFixed(2)} USD (${opt.uso})</button>`;
+        post.options.forEach((opt, idx) => {
+          optionsHTML += `<button class="option-button" onclick="buyService('${id}', ${idx})">$${Number(opt.precio).toFixed(2)} - ${opt.nombre || opt.uso || ''}</button>`;
         });
       } else {
         optionsHTML = '<p>Sin opciones disponibles.</p>';
@@ -152,45 +149,101 @@
       `;
     }
 
-    // Toggle options
     window.toggleOptions = (id) => {
       const el = document.getElementById('options-' + id);
       if (!el) return;
       el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
     };
 
-    // Comprar: revisar saldo y descontar
-    window.buyService = async (title, price, usage, postId) => {
-      if (!confirm(`Comprar ${title} por $${price.toFixed(2)} USD?`)) return;
+    // Comprar: recibe postId y optionIndex
+    window.buyService = async (postId, optionIndex) => {
+      if (!confirm('Confirmar compra?')) return;
       try {
-        // localizar usuario doc
-        let userDocRef = null;
-        if (currentUserId) userDocRef = doc(db, 'users', currentUserId);
-        else {
-          // buscar por username
+        // Obtener user doc ref
+        let userRef = null, userSnap = null, userId = localStorage.getItem('currentUserId');
+        if (userId) {
+          userRef = doc(db, 'users', userId);
+          userSnap = await getDoc(userRef);
+        } else {
+          // buscar por username y setear currentUserId
           const usersCol = collection(db, 'users');
           const usersSnap = await getDocs(usersCol);
-          usersSnap.forEach(u => { if (u.data().username === currentUser) userDocRef = doc(db, 'users', u.id); });
+          usersSnap.forEach(d => {
+            if (d.data().username === currentUser) { userId = d.id; userRef = doc(db, 'users', d.id); userSnap = d; }
+          });
+          if (userRef && userId) localStorage.setItem('currentUserId', userId);
         }
-        if (!userDocRef) { alert('Usuario no encontrado.'); return; }
-        const uSnap = await getDoc(userDocRef);
-        if (!uSnap.exists()) { alert('Usuario no existe.'); return; }
-        const data = uSnap.data();
-        const saldoActual = parseFloat(data.saldo || 0);
-        if (saldoActual < price) { alert('Saldo insuficiente.'); return; }
 
-        // Actualizar saldo
-        const nuevo = parseFloat((saldoActual - price).toFixed(2));
-        await updateDoc(userDocRef, { saldo: nuevo });
-        alert(`Compra realizada. Nuevo saldo: $${nuevo.toFixed(2)} USD`);
-        displayBalance.textContent = `Saldo: $${nuevo.toFixed(2)} USD`;
+        if (!userRef || !userSnap) { alert('Usuario no encontrado.'); return; }
+        const userData = (userSnap.exists && userSnap.exists()) ? userSnap.data() : userSnap.data();
+        const saldoActual = parseFloat(userData.saldo || 0);
+
+        // Obtener post y opción
+        const postRef = doc(db, 'posts', postId);
+        const postSnap = await getDoc(postRef);
+        if (!postSnap.exists()) { alert('Producto no encontrado.'); return; }
+        const postData = postSnap.data();
+        const option = postData.options && postData.options[optionIndex];
+        if (!option) { alert('Opción inválida.'); return; }
+
+        const price = parseFloat(option.precio || 0);
+        if (isNaN(price)) { alert('Precio inválido.'); return; }
+        if (saldoActual < price) { alert('Saldo insuficiente. Por favor recarga.'); return; }
+
+        // keys disponibles?
+        const keysArr = Array.isArray(option.keys) ? [...option.keys] : [];
+        if (keysArr.length === 0) { alert('No hay keys disponibles para esta opción. Contacta al admin.'); return; }
+
+        // Extraer la primera key (FIFO)
+        const deliveredKey = keysArr.shift();
+
+        // Actualizar la estructura de options para el post: sustituir keys del optionIndex
+        const newOptions = Array.isArray(postData.options) ? postData.options.map((op, i) => {
+          if (i === optionIndex) {
+            // copiar op y reemplazar keys
+            return { ...op, keys: keysArr };
+          }
+          return op;
+        }) : postData.options;
+
+        // Actualizar post: options reemplazadas
+        await updateDoc(postRef, { options: newOptions });
+
+        // Actualizar saldo del usuario
+        const newSaldo = parseFloat((saldoActual - price).toFixed(2));
+        await updateDoc(userRef, { saldo: newSaldo });
+
+        // Registrar compra
+        await addDoc(collection(db, 'purchases'), {
+          userId: userId || localStorage.getItem('currentUserId') || null,
+          username: currentUser,
+          postId,
+          optionIndex,
+          price,
+          keyDelivered: deliveredKey,
+          createdAt: new Date().toISOString()
+        });
+
+        // Actualizar UI
+        displayBalance.textContent = `Saldo: $${newSaldo.toFixed(2)} USD`;
+        showModal(deliveredKey, `Compra: ${postData.title} — ${option.nombre || option.uso || ''}`);
+
       } catch (err) {
-        console.error(err);
-        alert('Error al procesar la compra.');
+        console.error('Error al comprar:', err);
+        alert('Ocurrió un error al procesar la compra.');
       }
     };
 
-    // Logout
+    // Modal helpers
+    function showModal(key, info) {
+      document.getElementById('modal-key').textContent = key;
+      document.getElementById('modal-info').textContent = info || '';
+      const modal = document.getElementById('modal');
+      modal.style.display = 'flex';
+    }
+    window.closeModal = () => { document.getElementById('modal').style.display = 'none'; }
+
+    // logout
     window.logout = () => {
       localStorage.removeItem('currentUser');
       localStorage.removeItem('currentUserId');
@@ -198,16 +251,8 @@
       window.location.href = 'login.html';
     };
 
-    // Small helper to escape HTML
-    function escapeHtml(text) {
-      if (!text) return '';
-      return String(text).replace(/[&<>"'`=\/]/g, function (s) {
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','=':'&#x3D;','`':'&#x60;'})[s];
-      });
-    }
-
     // Inicial
-    (async () => { await loadUserInfo(); await loadPosts(); })();
+    (async ()=> { await loadUserInfo(); await loadPosts(); })();
   </script>
 </body>
 </html>
