@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,11 +7,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f4f7f6; margin:0; padding-top:70px; }
-    .header { position:fixed; top:0; left:0; width:100%; background:linear-gradient(to right,#0072ff,#00c6ff); color:#fff; padding:10px 15px; box-shadow:0 2px 10px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:100;}
+    .header { position:fixed; top:0; left:0; width:100%; background:linear-gradient(to right,#0072ff,#00c6ff); color:#fff; padding:10px 15px; box-shadow:0 2px 10px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:100; box-sizing: border-box;}
     .header h1{font-size:1.3em;margin:0;}
     .top-right{display:flex; align-items:center; gap:10px;}
     .username-span{font-weight:700; color:#fff; background:rgba(255,255,255,0.08); padding:6px 10px; border-radius:8px;}
     .logout-btn{background:#d9534f;color:#fff;border:0;padding:6px 10px;border-radius:6px;cursor:pointer;}
+    .logout-btn:hover{background:#c9302c;}
     .container{max-width:1000px;margin:20px auto;padding:0 20px;}
     .loading{ text-align:center; padding:50px; font-size:1.2em; color:#555; }
     .post{ background:#fff; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.08); margin-bottom:22px; overflow:hidden; }
@@ -20,24 +20,26 @@
     .post-content{ padding:14px; }
     .post-content h2{ margin:0 0 6px; color:#0072ff; font-size:1.3em; }
     .view-btn{ background:#f0ad4e; color:#fff; padding:10px; border-radius:6px; border:0; width:100%; cursor:pointer; }
+    .view-btn:hover{ background:#ec971f; }
     .options-container{ display:none; margin-top:12px; padding:10px; border:1px solid #ddd; border-radius:6px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-    .option-button{ background:#5cb85c; color:#fff; padding:8px 12px; border-radius:6px; border:0; cursor:pointer; }
-    @media (max-width:600px){ body{padding-top:90px;} .header{flex-direction:column;align-items:flex-start;} }
+    .option-button{ background:#5cb85c; color:#fff; padding:8px 12px; border-radius:6px; border:0; cursor:pointer; font-weight:600;}
+    .option-button:hover{ background:#449d44; }
+    @media (max-width:600px){ body{padding-top:100px;} .header{flex-direction:column;align-items:flex-start;} .top-right{margin-top:5px;} }
     /* modal simple */
     .modal { position: fixed; inset: 0; display: none; align-items:center; justify-content:center; background: rgba(0,0,0,0.5); z-index:9999; }
     .modal .card { background:#fff; padding:20px; border-radius:10px; width:90%; max-width:420px; text-align:center; }
     .btn-close { background:#0072ff; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .btn-close:hover { background:#0056e6; }
   </style>
 </head>
 <body>
-  <!-- sesión -->
   <script>
     const currentUser = localStorage.getItem('currentUser');
     if (!currentUser) { window.location.href = 'login.html'; }
   </script>
 
   <div class="header">
-    <h1>Xits Socios</h1>
+    <h1><i class="fas fa-gem"></i> Xits Socios</h1>
     <div class="top-right">
       <span class="username-span" id="display-username">Cargando...</span>
       <span id="display-balance" style="font-weight:700; color:#fff;">Saldo: $0.00</span>
@@ -47,12 +49,12 @@
 
   <div class="container" id="posts-container"><div class="loading">Cargando publicaciones...</div></div>
 
-  <!-- Modal para mostrar key -->
-  <div id="modal" class="modal">
+  <div id="modal" class="modal" style="display:none;">
     <div class="card">
-      <h3>Key entregada</h3>
-      <p id="modal-key" style="word-break:break-all; font-weight:700;"></p>
-      <p id="modal-info"></p>
+      <h3>✅ Key entregada</h3>
+      <p id="modal-info" style="font-style:italic; color:#666;"></p>
+      <p id="modal-key" style="word-break:break-all; font-weight:700; font-size:1.1em; color:#25A85A; border:1px dashed #25A85A; padding:10px; border-radius:6px;"></p>
+      <p style="font-size:0.9em;">¡Guárdala bien!</p>
       <button class="btn-close" onclick="closeModal()">Cerrar</button>
     </div>
   </div>
@@ -63,6 +65,7 @@
       getFirestore, collection, getDocs, doc, getDoc, updateDoc, addDoc
     } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+    // Reemplaza con tu configuración REAL de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
       authDomain: "sociosxit-5f841.firebaseapp.com",
@@ -76,37 +79,45 @@
     const db = getFirestore(app);
 
     const currentUser = localStorage.getItem('currentUser');
-    const currentUserId = localStorage.getItem('currentUserId');
+    let currentUserId = localStorage.getItem('currentUserId'); // Usaremos 'let' para poder actualizarlo
 
     const displayUsername = document.getElementById('display-username');
     const displayBalance = document.getElementById('display-balance');
     const postsContainer = document.getElementById('posts-container');
 
+    // Cargar datos del usuario (saldo y nombre)
     async function loadUserInfo() {
       try {
+        if (!currentUserId) {
+           // Si no tenemos ID, buscamos por username (esto solo debería pasar si el localStorage se borró parcialmente)
+          const usersCol = collection(db, 'users');
+          const q = query(usersCol, where('username', '==', currentUser));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            snap.forEach(d => {
+              currentUserId = d.id;
+              localStorage.setItem('currentUserId', d.id);
+            });
+          }
+        }
+
         if (currentUserId) {
           const uSnap = await getDoc(doc(db, 'users', currentUserId));
           if (uSnap.exists()) {
             const d = uSnap.data();
             displayUsername.textContent = d.username || currentUser;
-            displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo||0)).toFixed(2)} USD`;
+            displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo || 0)).toFixed(2)} USD`;
             return;
           }
         }
-        // fallback: search by username
-        const usersCol = collection(db, 'users');
-        const snap = await getDocs(usersCol);
-        snap.forEach(d => {
-          const data = d.data();
-          if (data.username === currentUser) {
-            displayUsername.textContent = data.username;
-            displayBalance.textContent = `Saldo: $${(parseFloat(data.saldo||0)).toFixed(2)} USD`;
-            localStorage.setItem('currentUserId', d.id);
-          }
-        });
+
+        displayUsername.textContent = currentUser; // Fallback si no encuentra el doc
+        displayBalance.textContent = `Saldo: $0.00 USD`;
+
       } catch (err) { console.error('Error cargando usuario', err); displayUsername.textContent = currentUser; }
     }
 
+    // Cargar las publicaciones disponibles
     async function loadPosts() {
       postsContainer.innerHTML = '';
       try {
@@ -126,23 +137,34 @@
       }
     }
 
+    // Generar el HTML para cada publicación
     function createPostHTML(id, post) {
       let optionsHTML = '';
       if (post.options && Array.isArray(post.options) && post.options.length) {
         post.options.forEach((opt, idx) => {
-          optionsHTML += `<button class="option-button" onclick="buyService('${id}', ${idx})">$${Number(opt.precio).toFixed(2)} - ${opt.nombre || opt.uso || ''}</button>`;
+          const availableKeys = Array.isArray(opt.keys) ? opt.keys.length : 0;
+          const disabledAttr = availableKeys === 0 ? 'disabled' : '';
+          const buttonText = availableKeys > 0 ?
+            `$${Number(opt.precio).toFixed(2)} - ${opt.nombre || 'Opción'} (${availableKeys} disp.)` :
+            `AGOTADO - ${opt.nombre || 'Opción'}`;
+
+          optionsHTML += `
+            <button class="option-button" onclick="buyService('${id}', ${idx})" ${disabledAttr}>
+              ${buttonText}
+            </button>
+          `;
         });
       } else {
-        optionsHTML = '<p>Sin opciones disponibles.</p>';
+        optionsHTML = '<p style="color:#666; font-size:0.9em;">Sin opciones disponibles.</p>';
       }
 
       return `
         <div class="post">
-          <img src="${post.imageUrl || 'https://via.placeholder.com/1000x400'}" class="post-image" alt="${post.title||'Publicación'}" />
+          <img src="${post.imageUrl || 'https://via.placeholder.com/1000x400'}" class="post-image" alt="${post.title || 'Publicación'}" />
           <div class="post-content">
-            <h2>${post.title || 'Título'}</h2>
-            <p>${post.description || ''}</p>
-            <button class="view-btn" onclick="toggleOptions('${id}')">Ver Opciones</button>
+            <h2>${post.title || 'Título sin nombre'}</h2>
+            <p style="font-size:0.95em; color:#555;">${post.description || ''}</p>
+            <button class="view-btn" onclick="toggleOptions('${id}')">Ver Opciones de Compra</button>
             <div id="options-${id}" class="options-container">${optionsHTML}</div>
           </div>
         </div>
@@ -155,30 +177,19 @@
       el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
     };
 
-    // Comprar: recibe postId y optionIndex
+    // FUNCIÓN DE COMPRA
     window.buyService = async (postId, optionIndex) => {
-      if (!confirm('Confirmar compra?')) return;
-      try {
-        // Obtener user doc ref
-        let userRef = null, userSnap = null, userId = localStorage.getItem('currentUserId');
-        if (userId) {
-          userRef = doc(db, 'users', userId);
-          userSnap = await getDoc(userRef);
-        } else {
-          // buscar por username y setear currentUserId
-          const usersCol = collection(db, 'users');
-          const usersSnap = await getDocs(usersCol);
-          usersSnap.forEach(d => {
-            if (d.data().username === currentUser) { userId = d.id; userRef = doc(db, 'users', d.id); userSnap = d; }
-          });
-          if (userRef && userId) localStorage.setItem('currentUserId', userId);
-        }
+      if (!currentUserId) { alert('Error de sesión. Por favor, reinicia la página.'); return; }
+      if (!confirm('¿Confirmar la compra de este servicio/producto?')) return;
 
-        if (!userRef || !userSnap) { alert('Usuario no encontrado.'); return; }
-        const userData = (userSnap.exists && userSnap.exists()) ? userSnap.data() : userSnap.data();
+      try {
+        // 1. Obtener datos de usuario y post
+        const userRef = doc(db, 'users', currentUserId);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) { alert('Usuario no encontrado en la base de datos.'); return; }
+        const userData = userSnap.data();
         const saldoActual = parseFloat(userData.saldo || 0);
 
-        // Obtener post y opción
         const postRef = doc(db, 'posts', postId);
         const postSnap = await getDoc(postRef);
         if (!postSnap.exists()) { alert('Producto no encontrado.'); return; }
@@ -187,50 +198,45 @@
         if (!option) { alert('Opción inválida.'); return; }
 
         const price = parseFloat(option.precio || 0);
-        if (isNaN(price)) { alert('Precio inválido.'); return; }
-        if (saldoActual < price) { alert('Saldo insuficiente. Por favor recarga.'); return; }
+        if (isNaN(price) || price <= 0) { alert('Precio inválido para la opción.'); return; }
 
-        // keys disponibles?
+        // 2. Chequeo de saldo y keys
+        if (saldoActual < price) { alert('Saldo insuficiente. Por favor, recarga.'); return; }
+
         const keysArr = Array.isArray(option.keys) ? [...option.keys] : [];
-        if (keysArr.length === 0) { alert('No hay keys disponibles para esta opción. Contacta al admin.'); return; }
+        if (keysArr.length === 0) { alert('No hay keys disponibles para esta opción. Contacta al administrador.'); return; }
 
-        // Extraer la primera key (FIFO)
-        const deliveredKey = keysArr.shift();
-
-        // Actualizar la estructura de options para el post: sustituir keys del optionIndex
-        const newOptions = Array.isArray(postData.options) ? postData.options.map((op, i) => {
-          if (i === optionIndex) {
-            // copiar op y reemplazar keys
-            return { ...op, keys: keysArr };
-          }
+        // 3. Procesar compra: Extraer key y actualizar post
+        const deliveredKey = keysArr.shift(); // Saca la primera key del array (FIFO)
+        const newOptions = postData.options.map((op, i) => {
+          if (i === optionIndex) { return { ...op, keys: keysArr }; } // Actualiza el array de keys
           return op;
-        }) : postData.options;
+        });
 
-        // Actualizar post: options reemplazadas
+        // 4. Actualizar Firestore
         await updateDoc(postRef, { options: newOptions });
-
-        // Actualizar saldo del usuario
         const newSaldo = parseFloat((saldoActual - price).toFixed(2));
         await updateDoc(userRef, { saldo: newSaldo });
 
-        // Registrar compra
+        // 5. Registrar compra en la colección 'purchases'
         await addDoc(collection(db, 'purchases'), {
-          userId: userId || localStorage.getItem('currentUserId') || null,
+          userId: currentUserId,
           username: currentUser,
           postId,
-          optionIndex,
+          optionName: option.nombre || 'Sin nombre',
           price,
           keyDelivered: deliveredKey,
           createdAt: new Date().toISOString()
         });
 
-        // Actualizar UI
+        // 6. Actualizar UI y mostrar modal
         displayBalance.textContent = `Saldo: $${newSaldo.toFixed(2)} USD`;
-        showModal(deliveredKey, `Compra: ${postData.title} — ${option.nombre || option.uso || ''}`);
+        showModal(deliveredKey, `Compra: ${postData.title} - ${option.nombre || 'Opción'}`);
+        await loadPosts(); // Recargar posts para reflejar las keys restantes.
 
       } catch (err) {
         console.error('Error al comprar:', err);
-        alert('Ocurrió un error al procesar la compra.');
+        alert('Ocurrió un error al procesar la compra. Revisa la consola para más detalles.');
       }
     };
 
@@ -243,7 +249,7 @@
     }
     window.closeModal = () => { document.getElementById('modal').style.display = 'none'; }
 
-    // logout
+    // Función de Logout
     window.logout = () => {
       localStorage.removeItem('currentUser');
       localStorage.removeItem('currentUserId');
