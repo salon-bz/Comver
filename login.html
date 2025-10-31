@@ -1,92 +1,69 @@
+<!-- login.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Xits Socios - Login</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
+    /* Mantengo diseño simple y elegante (respetando tu idea original) */
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0072ff, #00c6ff);
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg,#0072ff,#00c6ff);
+      margin: 0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      color: #222;
     }
     .container {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
+      width: 95%; max-width: 420px;
+      background: #fff; padding: 28px; border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
     }
-    h1 {
-      color: #0072ff;
-      margin-bottom: 20px;
+    h1 { color:#0072ff; margin: 0 0 18px; text-align:center; }
+    .field { margin-bottom: 12px; }
+    input[type="text"], input[type="password"] {
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px;
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
+    button.primary {
+      width:100%; padding:12px; border-radius:10px; border:0; background:#0072ff; color:#fff; font-weight:700;
+      cursor:pointer; margin-top:6px;
     }
-    button {
-      background-color: #0072ff;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-    button:hover {
-      background-color: #0056e6;
-    }
-    .message {
-      margin-top: 10px;
-      font-weight: 600;
-    }
-    .toggle {
-      margin-top: 10px;
-      color: #0072ff;
-      cursor: pointer;
-    }
+    .toggle { margin-top:10px; text-align:center; color:#0072ff; cursor:pointer; }
+    .msg { margin-top:10px; text-align:center; font-weight:600; color:#d9534f; min-height:18px; }
+    .success { color: #25A85A; }
   </style>
 </head>
 <body>
-
   <div class="container">
     <h1><i class="fas fa-user-circle"></i> Xits Socios</h1>
 
-    <div id="login-form">
-      <input type="text" id="login-username" placeholder="Usuario" required>
-      <input type="password" id="login-password" placeholder="Contraseña" required>
-      <button onclick="loginUser()">Iniciar sesión</button>
-      <p class="toggle" onclick="showRegister()">¿No tienes cuenta? Regístrate</p>
-      <div class="message" id="login-message"></div>
+    <!-- Login -->
+    <div id="login-block">
+      <div class="field"><input id="login-username" type="text" placeholder="Usuario" /></div>
+      <div class="field"><input id="login-password" type="password" placeholder="Contraseña" /></div>
+      <button class="primary" onclick="loginUser()">Iniciar sesión</button>
+      <p class="toggle" onclick="toggleForms(true)">¿No tienes cuenta? Regístrate</p>
+      <div class="msg" id="login-msg"></div>
     </div>
 
-    <div id="register-form" style="display:none;">
-      <input type="text" id="register-username" placeholder="Usuario nuevo" required>
-      <input type="password" id="register-password" placeholder="Contraseña" required>
-      <button onclick="registerUser()">Registrar</button>
-      <p class="toggle" onclick="showLogin()">¿Ya tienes cuenta? Inicia sesión</p>
-      <div class="message" id="register-message"></div>
+    <!-- Register -->
+    <div id="register-block" style="display:none;">
+      <div class="field"><input id="reg-username" type="text" placeholder="Usuario (ej: pepito123)" /></div>
+      <div class="field"><input id="reg-password" type="password" placeholder="Contraseña (mín 6)" /></div>
+      <div class="field"><input id="reg-email" type="email" placeholder="Correo (opcional)" /></div>
+      <div class="field"><input id="reg-whatsapp" type="tel" placeholder="WhatsApp (opcional)" /></div>
+      <button class="primary" onclick="registerUser()">Registrar</button>
+      <p class="toggle" onclick="toggleForms(false)">¿Ya tienes cuenta? Inicia sesión</p>
+      <div class="msg" id="reg-msg"></div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+    // --- Pega aquí tu firebaseConfig (o deja la que ya tenías) ---
     const firebaseConfig = {
       apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
       authDomain: "sociosxit-5f841.firebaseapp.com",
@@ -99,90 +76,105 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.showRegister = () => {
-      document.getElementById('login-form').style.display = 'none';
-      document.getElementById('register-form').style.display = 'block';
-    };
+    // Admin credentials (tal y como me indicaste)
+    const ADMIN_USERNAME = 'LUCK_XIT';
+    const ADMIN_PASSWORD = '32199';
 
-    window.showLogin = () => {
-      document.getElementById('login-form').style.display = 'block';
-      document.getElementById('register-form').style.display = 'none';
+    // UI helpers
+    window.toggleForms = (showRegister) => {
+      document.getElementById('login-block').style.display = showRegister ? 'none' : 'block';
+      document.getElementById('register-block').style.display = showRegister ? 'block' : 'none';
+      document.getElementById('login-msg').textContent = '';
+      document.getElementById('reg-msg').textContent = '';
     };
 
     // --- LOGIN ---
     window.loginUser = async () => {
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      const msg = document.getElementById('login-message');
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value;
+      const msg = document.getElementById('login-msg');
       msg.textContent = '';
 
-      if (!username || !password) {
-        msg.textContent = '❌ Ingresa usuario y contraseña.';
-        return;
-      }
+      if (!u || !p) { msg.textContent = 'Completa usuario y contraseña.'; return; }
 
-      // ADMIN
-      if (username === 'LUCK_XIT' && password === '32199') {
+      // Admin shortcut (según tus requisitos)
+      if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
+        // Guardamos sesión admin
+        localStorage.setItem('currentUser', u);
+        localStorage.setItem('isAdmin', 'true');
         window.location.href = 'admin.html';
         return;
       }
 
       try {
-        const q = query(collection(db, "users"), where("username", "==", username));
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-          msg.textContent = '❌ Usuario no encontrado.';
-          return;
-        }
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', u));
+        const snap = await getDocs(q);
+        if (snap.empty) { msg.textContent = 'Usuario no encontrado.'; return; }
 
-        let valid = false;
-        snapshot.forEach(doc => {
-          if (doc.data().password === password) valid = true;
+        let matchedDoc = null;
+        snap.forEach(d => {
+          if (d.data().password === p) matchedDoc = { id: d.id, data: d.data() };
         });
 
-        if (valid) {
-          localStorage.setItem("currentUser", username);
-          // 🔹 Aquí va la redirección corregida:
-          window.location.href = 'index.html';
+        if (!matchedDoc) { msg.textContent = 'Contraseña incorrecta.'; return; }
+
+        // Login OK: guardamos sesión
+        localStorage.setItem('currentUser', matchedDoc.data.username || u);
+        localStorage.setItem('currentUserId', matchedDoc.id);
+        localStorage.setItem('isAdmin', matchedDoc.data.isAdmin ? 'true' : 'false');
+
+        // Si el doc tiene isAdmin true, enviamos al admin
+        if (matchedDoc.data.isAdmin) {
+          window.location.href = 'admin.html';
         } else {
-          msg.textContent = '❌ Contraseña incorrecta.';
+          window.location.href = 'index.html';
         }
-      } catch (e) {
-        msg.textContent = '❌ Error al iniciar sesión: ' + e.message;
+      } catch (err) {
+        console.error(err);
+        msg.textContent = 'Error al iniciar sesión.';
       }
     };
 
     // --- REGISTRO ---
     window.registerUser = async () => {
-      const username = document.getElementById('register-username').value.trim();
-      const password = document.getElementById('register-password').value.trim();
-      const msg = document.getElementById('register-message');
+      const u = document.getElementById('reg-username').value.trim();
+      const p = document.getElementById('reg-password').value;
+      const email = document.getElementById('reg-email').value.trim();
+      const wa = document.getElementById('reg-whatsapp').value.trim();
+      const msg = document.getElementById('reg-msg');
       msg.textContent = '';
 
-      if (!username || !password) {
-        msg.textContent = '❌ Todos los campos son obligatorios.';
-        return;
-      }
+      if (!u || !p) { msg.textContent = 'Usuario y contraseña son obligatorios.'; return; }
+      if (p.length < 6) { msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
 
       try {
-        const q = query(collection(db, "users"), where("username", "==", username));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          msg.textContent = '⚠️ Ese usuario ya existe.';
-          return;
-        }
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', u));
+        const snap = await getDocs(q);
+        if (!snap.empty) { msg.textContent = 'Ese usuario ya existe.'; return; }
 
-        await addDoc(collection(db, "users"), {
-          username,
-          password,
-          saldo: 0
-        });
+        // Crear doc en Firestore
+        const newData = {
+          username: u,
+          password: p,
+          email: email || '',
+          whatsapp: wa || '',
+          saldo: 0,
+          isAdmin: (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) ? true : false
+        };
 
-        msg.textContent = '✅ Registro exitoso. Ahora inicia sesión.';
-        document.getElementById('register-username').value = '';
-        document.getElementById('register-password').value = '';
-      } catch (e) {
-        msg.textContent = '❌ Error al registrar: ' + e.message;
+        const added = await addDoc(usersRef, newData);
+
+        msg.textContent = 'Registro exitoso. Ya puedes iniciar sesión.';
+        msg.classList.remove('error'); msg.classList.add('success');
+        document.getElementById('reg-username').value = '';
+        document.getElementById('reg-password').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-whatsapp').value = '';
+      } catch (err) {
+        console.error(err);
+        msg.textContent = 'Error al registrar usuario.';
       }
     };
   </script>
