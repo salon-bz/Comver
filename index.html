@@ -1,234 +1,213 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xits Socios - Publicaciones</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <style>
-        /* Estilos Base */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 70px; }
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
-        .loading { text-align: center; padding: 50px; font-size: 1.5em; color: #555; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Xits Socios - Inicio</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* Mantengo tu estilo original (header, posts) */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 70px; }
+    .header {
+      position: fixed; top:0; left:0; width:100%; background: linear-gradient(to right,#0072ff,#00c6ff); color:#fff;
+      padding: 10px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:100;
+    }
+    .header h1 { font-size:1.3em; margin:0; }
+    .user-info { display:flex; align-items:center; gap:12px; }
+    .info-item { font-weight:600; font-size:0.95em; }
+    .logout-btn { background: #d9534f; color:#fff; border:0; padding:6px 10px; border-radius:6px; cursor:pointer; }
+    .logout-btn:hover { background:#c9302c; }
 
-        /* --- Header Fijo y Responsive --- */
-        .header { 
-            position: fixed; top: 0; left: 0; width: 100%; 
-            background: linear-gradient(to right, #0072ff, #00c6ff); color: white; 
-            padding: 10px 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
-            display: flex; justify-content: space-between; align-items: center; z-index: 100; 
-        }
-        .header h1 { font-size: 1.3em; margin: 0; }
-        .user-info { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-        .info-item { margin-right: 15px; font-weight: 600; font-size: 0.9em; }
-        
-        /* Botones de Acción */
-        .recargar-btn { background-color: #25D366; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; transition: background-color 0.3s; margin-right: 10px; }
-        .logout-btn { background-color: #d9534f; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-        .recargar-btn:hover { background-color: #128C7E; }
-        .logout-btn:hover { background-color: #c9302c; }
+    .container { max-width:1000px; margin:20px auto; padding: 0 20px; }
+    .loading { text-align:center; padding:50px; font-size:1.2em; color:#555; }
 
-        /* --- Publicaciones --- */
-        .post { background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); margin-bottom: 25px; overflow: hidden; }
-        .post-image { width: 100%; height: 200px; object-fit: cover; }
-        .post-content { padding: 15px; }
-        .post-content h2 { margin-top: 0; color: #0072ff; font-size: 1.4em; }
-        .view-btn { background-color: #f0ad4e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; display: block; width: 100%; text-align: center; }
-        
-        /* Opciones de Compra */
-        .options-container { display: none; margin-top: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; display: flex; flex-wrap: wrap; justify-content: center; }
-        .option-button { background-color: #5cb85c; color: white; border: none; padding: 8px 10px; border-radius: 5px; margin: 5px; cursor: pointer; font-size: 0.9em; transition: background-color 0.3s; }
+    .post { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.08); margin-bottom:22px; overflow:hidden; }
+    .post-image { width:100%; height:200px; object-fit:cover; }
+    .post-content { padding:14px; }
+    .post-content h2 { margin:0 0 6px; color:#0072ff; font-size:1.3em; }
+    .view-btn { background:#f0ad4e; color:white; padding:10px; border-radius:6px; border:0; width:100%; cursor:pointer; }
+    .options-container { display:none; margin-top:12px; padding:10px; border:1px solid #ddd; border-radius:6px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+    .option-button { background:#5cb85c; color:white; padding:8px 12px; border-radius:6px; border:0; cursor:pointer; }
 
-        /* Media Query para móvil */
-        @media (max-width: 600px) {
-            body { padding-top: 90px; }
-            .header { flex-direction: column; align-items: flex-start; }
-            .user-info { justify-content: space-between; width: 100%; margin-top: 10px; }
-            .info-item { margin: 0 10px 0 0; font-size: 0.8em; }
-            .post-content h2 { font-size: 1.2em; }
-        }
-    </style>
+    /* Botón superior derecho para cerrar sesión y mostrar usuario */
+    .top-right { position: absolute; right: 14px; top: 10px; display:flex; gap:10px; align-items:center; }
+    .username-span { font-weight:700; color:#fff; background:rgba(255,255,255,0.08); padding:6px 10px; border-radius:8px; }
+
+    @media (max-width:600px){ body{padding-top:90px;} .header{flex-direction:column;align-items:flex-start;} }
+  </style>
 </head>
 <body>
-    
-    <div class="header">
-        <h1>Xits Socios</h1>
-        <div class="user-info">
-            <span class="info-item" id="user-username">Cargando...</span>
-            <span class="info-item" id="user-balance">Saldo: $0.00 USD</span>
-            <button class="recargar-btn" onclick="recargarSaldo()">
-                <i class="fab fa-whatsapp"></i> Recargar
-            </button>
-            <button class="logout-btn" onclick="handleLogout()">
-                <i class="fas fa-sign-out-alt"></i> Salir
-            </button>
-        </div>
+  <!-- Control de sesión: si no hay sesión válida, redirige al login -->
+  <script>
+    // Verificar sesión: currentUser en localStorage
+    const cu = localStorage.getItem('currentUser');
+    if (!cu) { window.location.href = 'login.html'; }
+  </script>
+
+  <div class="header">
+    <h1>Xits Socios</h1>
+    <div style="display:flex; align-items:center;">
+      <div class="top-right">
+        <span class="username-span" id="display-username">Cargando...</span>
+        <span class="info-item" id="display-balance">Saldo: $0.00</span>
+        <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+      </div>
     </div>
+  </div>
 
-    <div class="container" id="posts-container">
-        <div class="loading">Cargando publicaciones...</div>
-    </div>
+  <div class="container" id="posts-container">
+    <div class="loading">Cargando publicaciones...</div>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        // TU CONFIGURACIÓN
-        const firebaseConfig = {
-          apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
-          authDomain: "sociosxit-5f841.firebaseapp.com",
-          projectId: "sociosxit-5f841",
-          storageBucket: "sociosxit-5f841.firebasestorage.app",
-          messagingSenderId: "364183519851",
-          appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
-        };
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
+      authDomain: "sociosxit-5f841.firebaseapp.com",
+      projectId: "sociosxit-5f841",
+      storageBucket: "sociosxit-5f841.firebasestorage.app",
+      messagingSenderId: "364183519851",
+      appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    const currentUser = localStorage.getItem('currentUser');
+    const currentUserId = localStorage.getItem('currentUserId'); // puede existir si se guardó en login
+    const postsContainer = document.getElementById('posts-container');
+    const displayUsername = document.getElementById('display-username');
+    const displayBalance = document.getElementById('display-balance');
 
-        // VERIFICACIÓN DE SESIÓN
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                await loadUserData(user.uid);
-                await loadPosts();
-            } else {
-                window.location.href = 'login.html';
-            }
+    // Cargar datos de usuario (by username or by id)
+    async function loadUserInfo() {
+      try {
+        if (currentUserId) {
+          const udoc = await getDoc(doc(db, 'users', currentUserId));
+          if (udoc.exists()) {
+            const d = udoc.data();
+            displayUsername.textContent = d.username || currentUser;
+            displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo||0)).toFixed(2)} USD`;
+            return;
+          }
+        }
+        // fallback: buscar por username
+        const usersCol = collection(db, 'users');
+        const allUsers = await getDocs(usersCol);
+        allUsers.forEach(u => {
+          const d = u.data();
+          if (d.username === currentUser) {
+            displayUsername.textContent = d.username;
+            displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo||0)).toFixed(2)} USD`;
+          }
         });
+      } catch (err) {
+        console.error('Error loading user info', err);
+        displayUsername.textContent = currentUser;
+      }
+    }
 
-        // CARGAR SALDO Y USERNAME
-        async function loadUserData(uid) {
-            try {
-                const userRef = doc(db, "users", uid);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    document.getElementById('user-username').textContent = data.username || 'Usuario';
-                    document.getElementById('user-balance').textContent = `Saldo: $${(typeof data.saldo === 'number' ? data.saldo.toFixed(2) : parseFloat(data.saldo || 0).toFixed(2))} USD`;
-                } else {
-                    document.getElementById('user-username').textContent = 'Error de datos';
-                }
-            } catch (err) {
-                console.error('Error al cargar datos de usuario', err);
-            }
+    // Cargar posts
+    async function loadPosts() {
+      postsContainer.innerHTML = '';
+      try {
+        const postsCol = collection(db, 'posts');
+        const snap = await getDocs(postsCol);
+        if (snap.empty) {
+          postsContainer.innerHTML = '<div class="loading">No hay publicaciones disponibles.</div>';
+          return;
         }
+        snap.forEach(docItem => {
+          const p = docItem.data();
+          postsContainer.innerHTML += createPostHTML(docItem.id, p);
+        });
+      } catch (err) {
+        console.error(err);
+        postsContainer.innerHTML = '<div class="loading">Error cargando publicaciones.</div>';
+      }
+    }
 
-        // CARGAR PUBLICACIONES
-        async function loadPosts() {
-            const postsContainer = document.getElementById('posts-container');
-            postsContainer.innerHTML = ''; 
+    function createPostHTML(id, post) {
+      let optionsHTML = '';
+      if (post.options && Array.isArray(post.options) && post.options.length) {
+        post.options.forEach(opt => {
+          optionsHTML += `<button class="option-button" onclick="buyService('${escapeHtml(post.title)}', ${Number(opt.precio)}, '${escapeHtml(opt.uso)}', '${id}')">$${Number(opt.precio).toFixed(2)} USD (${opt.uso})</button>`;
+        });
+      } else {
+        optionsHTML = '<p>Sin opciones disponibles.</p>';
+      }
 
-            try {
-                const postsCol = collection(db, "posts");
-                const postsSnap = await getDocs(postsCol);
-                
-                if (postsSnap.empty) {
-                    postsContainer.innerHTML = '<div class="loading">No hay publicaciones disponibles.</div>';
-                    return;
-                }
+      return `
+        <div class="post">
+          <img src="${post.imageUrl || 'https://via.placeholder.com/1000x400'}" class="post-image" alt="${post.title||'Publicación'}" />
+          <div class="post-content">
+            <h2>${post.title || 'Título'}</h2>
+            <p>${post.description || ''}</p>
+            <button class="view-btn" onclick="toggleOptions('${id}')">Ver Opciones</button>
+            <div id="options-${id}" class="options-container">${optionsHTML}</div>
+          </div>
+        </div>
+      `;
+    }
 
-                postsSnap.forEach(docItem => {
-                    const post = docItem.data();
-                    postsContainer.innerHTML += createPostHTML(docItem.id, post);
-                });
-            } catch (err) {
-                console.error('Error al cargar posts', err);
-                postsContainer.innerHTML = '<div class="loading">Error al cargar publicaciones.</div>';
-            }
+    // Toggle options
+    window.toggleOptions = (id) => {
+      const el = document.getElementById('options-' + id);
+      if (!el) return;
+      el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+    };
+
+    // Comprar: revisar saldo y descontar
+    window.buyService = async (title, price, usage, postId) => {
+      if (!confirm(`Comprar ${title} por $${price.toFixed(2)} USD?`)) return;
+      try {
+        // localizar usuario doc
+        let userDocRef = null;
+        if (currentUserId) userDocRef = doc(db, 'users', currentUserId);
+        else {
+          // buscar por username
+          const usersCol = collection(db, 'users');
+          const usersSnap = await getDocs(usersCol);
+          usersSnap.forEach(u => { if (u.data().username === currentUser) userDocRef = doc(db, 'users', u.id); });
         }
-        
-        // Genera el HTML de la publicación
-        function createPostHTML(id, post) {
-            let optionsHTML = '';
-            if (post.options && post.options.length > 0) {
-                post.options.forEach(option => {
-                    optionsHTML += `<button class="option-button" onclick="buyService('${escapeHtml(post.title)}', ${Number(option.precio)}, '${escapeHtml(option.uso)}')">
-                        $${Number(option.precio).toFixed(2)} USD (${option.uso})
-                    </button>`;
-                });
-            } else {
-                optionsHTML = '<p>Sin opciones disponibles.</p>';
-            }
+        if (!userDocRef) { alert('Usuario no encontrado.'); return; }
+        const uSnap = await getDoc(userDocRef);
+        if (!uSnap.exists()) { alert('Usuario no existe.'); return; }
+        const data = uSnap.data();
+        const saldoActual = parseFloat(data.saldo || 0);
+        if (saldoActual < price) { alert('Saldo insuficiente.'); return; }
 
-            return `
-                <div class="post">
-                    <img src="${post.imageUrl || 'https://via.placeholder.com/1000x400'}" alt="${post.title || 'Publicacion'}" class="post-image">
-                    <div class="post-content">
-                        <h2>${post.title || 'Título Desconocido'}</h2>
-                        <p>${post.description || 'Sin descripción.'}</p>
-                        <button class="view-btn" onclick="toggleOptions('${id}')">Ver Opciones</button>
-                        <div id="options-${id}" class="options-container">
-                            ${optionsHTML}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+        // Actualizar saldo
+        const nuevo = parseFloat((saldoActual - price).toFixed(2));
+        await updateDoc(userDocRef, { saldo: nuevo });
+        alert(`Compra realizada. Nuevo saldo: $${nuevo.toFixed(2)} USD`);
+        displayBalance.textContent = `Saldo: $${nuevo.toFixed(2)} USD`;
+      } catch (err) {
+        console.error(err);
+        alert('Error al procesar la compra.');
+      }
+    };
 
-        // --- Funciones Globales ---
-        window.handleLogout = async () => { 
-            await signOut(auth);
-            window.location.href = 'login.html';
-        };
+    // Logout
+    window.logout = () => {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('isAdmin');
+      window.location.href = 'login.html';
+    };
 
-        window.recargarSaldo = () => {
-            const phoneNumber = '573142369516';
-            const message = 'Hola quiero recargar saldo en la pagina de socios ya se que el minimo de saldo es de 3 usd.';
-            const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappURL, '_blank');
-        };
+    // Small helper to escape HTML
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/[&<>"'`=\/]/g, function (s) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','=':'&#x3D;','`':'&#x60;'})[s];
+      });
+    }
 
-        window.toggleOptions = (id) => {
-            var options = document.getElementById('options-' + id);
-            if (!options) return;
-            options.style.display = options.style.display === 'flex' ? 'none' : 'flex';
-        };
-        
-        // Función para comprar servicio: revisa saldo y (simula) descuento
-        window.buyService = async (title, price, usage) => {
-             try {
-                const user = auth.currentUser;
-                if (!user) { alert('Debes iniciar sesión.'); return; }
-                const userRef = doc(db, "users", user.uid);
-                const userSnap = await getDoc(userRef);
-                if (!userSnap.exists()) { alert('Usuario no encontrado'); return; }
-                const data = userSnap.data();
-                const saldoActual = parseFloat(data.saldo || 0);
-                if (saldoActual < price) {
-                    alert('Saldo insuficiente. Por favor recarga.');
-                    return;
-                }
-                // Descontar saldo (actualiza en Firestore)
-                await updateDoc(userRef, { saldo: parseFloat((saldoActual - price).toFixed(2)) });
-                alert(`Compra realizada: ${title} por $${price.toFixed(2)} USD. Saldo descontado.`);
-                // Refrescar saldo en pantalla
-                document.getElementById('user-balance').textContent = `Saldo: $${(saldoActual - price).toFixed(2)} USD`;
-             } catch (err) {
-                console.error('Error en la compra', err);
-                alert('Ocurrió un error al realizar la compra.');
-             }
-        };
-
-        // Escape html simple para evitar inyección en los botones (protección mínima)
-        function escapeHtml(text) {
-            if (!text) return '';
-            return String(text).replace(/[&<>"'`=\/]/g, function (s) {
-              return ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;',
-                '/': '&#x2F;',
-                '=': '&#x3D;',
-                '`': '&#x60;'
-              })[s];
-            });
-        }
-    </script>
+    // Inicial
+    (async () => { await loadUserInfo(); await loadPosts(); })();
+  </script>
 </body>
 </html>
