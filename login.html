@@ -10,8 +10,9 @@
     .container { width:95%; max-width:420px; background:#fff; padding:28px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,0.18); }
     h1 { color:#0072ff; margin:0 0 18px; text-align:center; }
     .field { margin-bottom:12px; }
-    input[type="text"], input[type="password"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
+    input[type="text"], input[type="password"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px; box-sizing: border-box;}
     button.primary { width:100%; padding:12px; border-radius:10px; border:0; background:#0072ff; color:#fff; font-weight:700; cursor:pointer; margin-top:6px; }
+    button.primary:hover { background:#0056e6; }
     .toggle { margin-top:10px; text-align:center; color:#0072ff; cursor:pointer; }
     .msg { margin-top:10px; text-align:center; font-weight:600; color:#d9534f; min-height:18px; }
     .success { color:#25A85A; }
@@ -39,12 +40,13 @@
   </div>
 
   <script type="module">
+    // Importaciones de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import {
-      getFirestore, collection, query, where, getDocs, addDoc, doc, getDoc
+      getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc
     } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    // <- Tu configuración original (la que tenías). Si quieres reemplazarla, pégala aquí.
+    // Reemplaza con tu configuración REAL de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
       authDomain: "sociosxit-5f841.firebaseapp.com",
@@ -65,9 +67,10 @@
       document.getElementById('register-block').style.display = showRegister ? 'block' : 'none';
       document.getElementById('login-msg').textContent = '';
       document.getElementById('reg-msg').textContent = '';
+      document.getElementById('reg-msg').classList.remove('success');
     };
 
-    // LOGIN
+    // FUNCIÓN DE LOGIN
     window.loginUser = async () => {
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
@@ -76,27 +79,24 @@
 
       if (!username || !password) { msg.textContent = 'Completa usuario y contraseña.'; return; }
 
-      // Admin shortcut (permite admin aunque no exista en Firestore)
+      // Atajo de administrador (para iniciar sesión aunque el doc no esté actualizado o exista)
       if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        // marcar sesión admin
         localStorage.setItem('currentUser', username);
         localStorage.setItem('isAdmin', 'true');
-        // Asegurar que exista doc admin en users (opcional/ idempotente)
+        // Asegurar que el admin exista en users
         try {
           const usersRef = collection(db, 'users');
           const q = query(usersRef, where('username', '==', username));
           const snap = await getDocs(q);
           if (snap.empty) {
-            // crear doc admin con saldo 0 e isAdmin true
             await addDoc(usersRef, { username, password, saldo: 0, isAdmin: true });
           } else {
-            // si existe, opcional: update isAdmin true
+             // Actualizar por si acaso no tiene el flag 'isAdmin: true'
             snap.forEach(async d => {
-              const ud = d.data();
-              if (!ud.isAdmin) {
-                const udocRef = doc(db, 'users', d.id);
-                await updateDocSafe(udocRef, { isAdmin: true });
+              if (d.data().password === password && !d.data().isAdmin) {
+                await updateDoc(doc(db, 'users', d.id), { isAdmin: true });
               }
+              localStorage.setItem('currentUserId', d.id);
             });
           }
         } catch (e) {
@@ -107,6 +107,7 @@
         return;
       }
 
+      // Login de usuario normal (busca en Firestore)
       try {
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('username', '==', username));
@@ -134,20 +135,17 @@
       }
     };
 
-    async function updateDocSafe(ref, data) {
-      try { await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js").then(mod => mod.updateDoc(ref, data)); } catch(e){console.warn(e)}
-    }
-
-    // REGISTER (solo username + password)
+    // FUNCIÓN DE REGISTRO
     window.registerUser = async () => {
       const username = document.getElementById('reg-username').value.trim();
       const password = document.getElementById('reg-password').value;
       const msg = document.getElementById('reg-msg');
       msg.textContent = '';
+      msg.classList.remove('success');
 
       if (!username || !password) { msg.textContent = 'Usuario y contraseña son obligatorios.'; return; }
       if (password.length < 6) { msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
-      if (username === ADMIN_USERNAME && password !== ADMIN_PASSWORD) {
+      if (username.toUpperCase() === ADMIN_USERNAME.toUpperCase() && password !== ADMIN_PASSWORD) {
         msg.textContent = 'Ese usuario está reservado por el administrador.'; return;
       }
 
@@ -158,11 +156,11 @@
         if (!snap.empty) { msg.textContent = 'Ese usuario ya existe.'; return; }
 
         const isAdmin = (username === ADMIN_USERNAME && password === ADMIN_PASSWORD);
-        const newDoc = await addDoc(usersRef, {
+        await addDoc(usersRef, {
           username,
           password,
           saldo: 0,
-          isAdmin: isAdmin ? true : false
+          isAdmin: isAdmin
         });
 
         msg.textContent = '✅ Registro exitoso. Ahora inicia sesión.';
