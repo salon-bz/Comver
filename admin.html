@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xits Socios - Panel de Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f7; margin: 0; padding: 20px; }
+        h1 { color: #0072ff; border-bottom: 2px solid #0072ff; padding-bottom: 10px; margin-bottom: 30px; font-size: 1.8em; }
+        .section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); margin-bottom: 30px; }
+        h2 { color: #333; margin-top: 0; margin-bottom: 20px; font-size: 1.4em; }
+        
+        form label { display: block; margin: 10px 0 5px; font-weight: 600; color: #555; }
+        form input[type="text"], form input[type="email"], form input[type="number"], form textarea { 
+            width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; 
+            box-sizing: border-box; /* Crucial para responsive */
+        }
+        form textarea { resize: vertical; max-width: 400px; }
+        
+        .admin-btn { background-color: #0072ff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; margin-top: 10px; }
+        .admin-btn:hover { background-color: #0056e6; }
+        
+        /* Gestión de Opciones de Precios */
+        #options-container { border: 1px dashed #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .option-group { display: flex; flex-wrap: wrap; margin-bottom: 10px; gap: 10px; }
+        .option-group input { flex-grow: 1; margin: 0; }
+        .remove-option-btn { background-color: #d9534f; }
+        .add-option-btn { background-color: #5cb85c; }
+        .message { margin-top: 15px; font-weight: 600; color: #0072ff; }
+
+        /* Lista de Usuarios */
+        #user-list { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+        #user-list th, #user-list td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #user-list th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <h1><i class="fas fa-tools"></i> Panel de Administración Xits Socios</h1>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, doc, updateDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        
+        // TU CONFIGURACIÓN
+        const firebaseConfig = {
+          apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
+          authDomain: "sociosxit-5f841.firebaseapp.com",
+          projectId: "sociosxit-5f841",
+          storageBucket: "sociosxit-5f841.firebasestorage.app",
+          messagingSenderId: "364183519851",
+          appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Sólo admin puede acceder: verificamos onAuthStateChanged y flag isAdmin en Firestore
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            // verificar isAdmin
+            try {
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDocs(collection(db, "users")); // fallback no usado
+                // Mejor obtener doc directamente
+                const udoc = await (await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js")).getDoc(userRef);
+                if (!udoc.exists()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const data = udoc.data();
+                if (!data.isAdmin) {
+                    alert('Acceso denegado. No eres administrador.');
+                    window.location.href = 'socios.html';
+                    return;
+                }
+                // Si es admin, cargar lista de usuarios (opcional)
+                loadUsers();
+            } catch (err) {
+                console.error('Error verificando admin', err);
+                window.location.href = 'login.html';
+            }
+        });
+
+        // --- SECCIÓN 1: GESTIÓN DE SALDO DE SOCIOS ---
+        window.applyBalance = async (event) => {
+            event.preventDefault();
+            const emailOrUsername = document.getElementById('user-email-target').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const messageElement = document.getElementById('saldo-message');
+            messageElement.textContent = '';
+
+            if (!emailOrUsername) {
+                messageElement.textContent = 'Ingresa el usuario o correo del socio.';
+                return;
+            }
+            try {
+                // Buscamos por username primero, si no encontramos, tratamos como email
+                const usersCol = collection(db, "users");
+                const qUsername = query(usersCol, where("username", "==", emailOrUsername));
+                const snapU = await getDocs(qUsername);
+                let targetUid = null;
+                if (!snapU.empty) {
+                    snapU.forEach(d => { targetUid = d.id; });
+                } else {
+                    // buscar por email campo (no el email sintético)
+                    const qEmail = query(usersCol, where("email", "==", emailOrUsername));
+                    const snapE = await getDocs(qEmail);
+                    if (!snapE.empty) {
+                        snapE.forEach(d => { targetUid = d.id; });
+                    }
+                }
+
+                if (targetUid) {
+                    const userRef = doc(db, "users", targetUid);
+                    await updateDoc(userRef, { saldo: amount }); 
+                    messageElement.textContent = `✅ Saldo de $${amount.toFixed(2)} USD aplicado.`;
+                    // refrescar lista de usuarios visible
+                    loadUsers();
+                } else {
+                    messageElement.textContent = `❌ Error: Usuario no encontrado.`;
+                }
+
+            } catch (error) {
+                messageElement.textContent = '❌ Error al aplicar saldo: ' + error.message;
+            }
+        };
+        
+        // --- SECCIÓN 2: CREAR PUBLICACIÓN ---
+        window.createPost = async (event) => {
+            event.preventDefault();
+            const title = document.getElementById('post-title').value;
+            const imageUrl = document.getElementById('post-link').value;
+            const description = document.getElementById('post-desc').value;
+            const messageElement = document.getElementById('post-message');
+            messageElement.textContent = '';
+            
+            const options = [];
+            let validOptions = true;
+            document.querySelectorAll('.option-group').forEach(group => {
+                const precio = group.querySelector('.option-precio').value;
+                const uso = group.querySelector('.option-uso').value;
+                if (precio && uso) {
+                    options.push({ precio: parseFloat(precio).toFixed(2), uso: uso });
+                } else if (precio || uso) {
+                     validOptions = false; // Opción incompleta
+                }
+            });
+            
+            if (!validOptions) {
+                messageElement.textContent = '❌ Por favor, complete o elimine las opciones de precio incompletas.';
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "posts"), {
+                    title: title,
+                    imageUrl: imageUrl,
+                    description: description,
+                    options: options,
+                    createdAt: new Date()
+                });
+                messageElement.textContent = '✅ ¡Publicación creada exitosamente!';
+                document.getElementById('create-post-form').reset();
+                document.getElementById('options-container').innerHTML = ''; // Limpiar opciones
+                loadUsers(); // refrescar (opcional)
+            } catch (error) {
+                messageElement.textContent = '❌ Error al crear publicación: ' + error.message;
+            }
+        };
+        
+        // --- GESTIÓN DINÁMICA DE OPCIONES ---
+        window.addOption = () => {
+            const container = document.getElementById('options-container');
+            container.innerHTML += `
+                <div class="option-group">
+                    <input type="number" class="option-precio" placeholder="Precio USD" min="0" step="0.01" required>
+                    <input type="text" class="option-uso" placeholder="Uso (Ej: Disp: 5, Uso Diario)" required>
+                    <button type="button" class="remove-option-btn admin-btn" onclick="this.parentElement.remove()">X</button>
+                </div>
+            `;
+        };
+
+        // Cargar lista de usuarios (tabla)
+        async function loadUsers() {
+            try {
+                const usersCol = collection(db, "users");
+                const usersSnap = await getDocs(usersCol);
+                const table = document.getElementById('users-table-body');
+                if (!table) return;
+                table.innerHTML = '';
+                usersSnap.forEach(u => {
+                    const d = u.data();
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${u.id}</td><td>${d.username || ''}</td><td>${d.email || ''}</td><td>$${(parseFloat(d.saldo || 0)).toFixed(2)}</td><td>${d.isAdmin ? 'SI' : 'NO'}</td>`;
+                    table.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Error cargando usuarios', err);
+            }
+        }
+
+        // Logout admin
+        window.handleLogout = async () => {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+    </script>
+    
+    <div class="section">
+        <h2><i class="fas fa-hand-holding-usd"></i> Administrar Saldo de Socios</h2>
+        <form onsubmit="applyBalance(event)">
+            <label for="user-email-target">Usuario o Correo del Usuario (username o email):</label>
+            <input type="text" id="user-email-target" placeholder="ej: pepito123 o correo@ejemplo.com" required>
+
+            <label for="amount">Saldo Total a establecer (USD):</label>
+            <input type="number" id="amount" step="0.01" min="0" required>
+            
+            <button type="submit" class="admin-btn"><i class="fas fa-wallet"></i> Establecer Saldo</button>
+            <div id="saldo-message" class="message"></div>
+        </form>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-bullhorn"></i> Crear Nueva Publicación</h2>
+        <form id="create-post-form" onsubmit="createPost(event)">
+            <label for="post-title">Título:</label>
+            <input type="text" id="post-title" required>
+
+            <label for="post-link">Foto (Link/URL):</label>
+            <input type="url" id="post-link" required>
+
+            <label for="post-desc">Descripción:</label>
+            <textarea id="post-desc" rows="3"></textarea>
+
+            <h3>Opciones de Precio y Uso</h3>
+            <div id="options-container">
+                </div>
+            
+            <button type="button" class="add-option-btn admin-btn" onclick="addOption()">
+                <i class="fas fa-plus"></i> Añadir Opción de Precio/Uso
+            </button>
+
+            <button type="submit" class="admin-btn"><i class="fas fa-plus-circle"></i> Crear Publicación</button>
+            <div id="post-message" class="message"></div>
+        </form>
+    </div>
+
+    <div class="section">
+        <h2><i class="fas fa-users"></i> Lista de Usuarios</h2>
+        <table id="user-list">
+            <thead><tr><th>UID</th><th>Usuario</th><th>Email</th><th>Saldo</th><th>Admin</th></tr></thead>
+            <tbody id="users-table-body"></tbody>
+        </table>
+    </div>
+
+    <div style="position: fixed; right: 12px; bottom: 12px;">
+        <button class="admin-btn" onclick="handleLogout()">Cerrar sesión</button>
+    </div>
+</body>
+</html>
