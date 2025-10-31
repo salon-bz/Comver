@@ -121,6 +121,7 @@
         return;
       }
 
+      // ADMIN
       if (username === 'LUCK_XIT' && password === '32199') {
         window.location.href = 'admin.html';
         return;
@@ -141,7 +142,8 @@
 
         if (valid) {
           localStorage.setItem("currentUser", username);
-          window.location.href = 'socios.html';
+          // 🔹 Aquí va la redirección corregida:
+          window.location.href = 'index.html';
         } else {
           msg.textContent = '❌ Contraseña incorrecta.';
         }
