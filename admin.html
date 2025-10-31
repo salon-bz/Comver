@@ -1,208 +1,184 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Xits Socios - Admin</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#eef2f7; margin:0; padding:20px; }
-    h1 { color:#0072ff; border-bottom:2px solid #0072ff; padding-bottom:10px; margin-bottom:18px; font-size:1.6em; }
-    .section { background:#fff; padding:18px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:18px; }
-    label { display:block; margin:8px 0 6px; font-weight:600; color:#444; }
-    input, textarea { width:100%; max-width:420px; padding:10px; border-radius:6px; border:1px solid #ddd; }
-    .admin-btn { background:#0072ff; color:#fff; border:0; padding:10px 16px; border-radius:8px; cursor:pointer; margin-top:10px; }
-    .admin-btn:hover { background:#0056e6; }
-    #users-table { width:100%; border-collapse:collapse; margin-top:12px; }
-    #users-table th, #users-table td { border:1px solid #ddd; padding:8px; text-align:left; }
-    #users-table th { background:#f7f7f7; }
-    .top-right { position: fixed; right: 12px; top: 10px; display:flex; gap:10px; align-items:center; z-index:999; }
-    .username-span { font-weight:700; color:#fff; background:rgba(0,0,0,0.12); padding:6px 10px; border-radius:8px; }
-    .logout-btn { background:#d9534f; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xits Socios - Panel de Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f7; margin: 0; padding: 20px; }
+        h1 { color: #0072ff; border-bottom: 2px solid #0072ff; padding-bottom: 10px; margin-bottom: 30px; font-size: 1.8em; }
+        .section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); margin-bottom: 30px; }
+        h2 { color: #333; margin-top: 0; margin-bottom: 20px; font-size: 1.4em; }
+        
+        form label { display: block; margin: 10px 0 5px; font-weight: 600; color: #555; }
+        form input[type="text"], form input[type="email"], form input[type="number"], form textarea { 
+            width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; 
+            box-sizing: border-box;
+        }
+        form textarea { resize: vertical; max-width: 400px; }
+        
+        .admin-btn { background-color: #0072ff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; margin-top: 10px; }
+        .admin-btn:hover { background-color: #0056e6; }
+        
+        #options-container { border: 1px dashed #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .option-group { display: flex; flex-wrap: wrap; margin-bottom: 10px; gap: 10px; }
+        .option-group input { flex-grow: 1; margin: 0; }
+        .remove-option-btn { background-color: #d9534f; }
+        .add-option-btn { background-color: #5cb85c; }
+        .message { margin-top: 15px; font-weight: 600; color: #0072ff; }
+
+        #user-list { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+        #user-list th, #user-list td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #user-list th { background-color: #f2f2f2; }
+    </style>
 </head>
 <body>
-  <!-- Sesión y control de acceso -->
-  <script>
-    const cu = localStorage.getItem('currentUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!cu || !isAdmin) {
-      // no session o no admin: redirige al login
-      window.location.href = 'login.html';
-    }
-  </script>
 
-  <div class="top-right">
-    <span class="username-span" id="admin-name-display">Admin</span>
-    <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
-  </div>
-
-  <h1><i class="fas fa-tools"></i> Panel de Administración Xits Socios</h1>
-
-  <div class="section">
-    <h2><i class="fas fa-hand-holding-usd"></i> Administrar Saldo de Socios</h2>
-    <form id="balance-form" onsubmit="applyBalance(event)">
-      <label for="user-target">Usuario o correo (username o email):</label>
-      <input id="user-target" type="text" placeholder="ej: pepito123 o correo@ejemplo.com" required />
-      <label for="amount">Saldo total a establecer (USD):</label>
-      <input id="amount" type="number" step="0.01" min="0" value="0" required />
-      <button class="admin-btn" type="submit">Establecer Saldo</button>
-      <div id="balance-msg" style="margin-top:10px;font-weight:700;color:#0072ff;"></div>
-    </form>
-  </div>
-
-  <div class="section">
-    <h2><i class="fas fa-bullhorn"></i> Crear Nueva Publicación</h2>
-    <form id="post-form" onsubmit="createPost(event)">
-      <label for="post-title">Título</label>
-      <input id="post-title" type="text" required />
-      <label for="post-link">Foto (URL)</label>
-      <input id="post-link" type="url" required />
-      <label for="post-desc">Descripción</label>
-      <textarea id="post-desc" rows="3"></textarea>
-      <div id="options-container" style="border:1px dashed #ddd; padding:10px; margin-top:8px; border-radius:6px;"></div>
-      <button type="button" class="admin-btn" onclick="addOption()">+ Añadir Opción</button>
-      <button type="submit" class="admin-btn">Crear Publicación</button>
-      <div id="post-msg" style="margin-top:10px;font-weight:700;color:#0072ff;"></div>
-    </form>
-  </div>
-
-  <div class="section">
-    <h2><i class="fas fa-users"></i> Lista de Usuarios</h2>
-    <table id="users-table">
-      <thead><tr><th>UID</th><th>Usuario</th><th>Email</th><th>Saldo</th><th>Admin</th></tr></thead>
-      <tbody id="users-tbody"></tbody>
-    </table>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, updateDoc, doc, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
+    <h1><i class="fas fa-tools"></i> Panel de Administración Xits Socios</h1>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, updateDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
       authDomain: "sociosxit-5f841.firebaseapp.com",
       projectId: "sociosxit-5f841",
       storageBucket: "sociosxit-5f841.firebasestorage.app",
       messagingSenderId: "364183519851",
       appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
-    };
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        // --- SECCIÓN 1: GESTIÓN DE SALDO DE SOCIOS ---
+        window.applyBalance = async (event) => {
+            event.preventDefault();
+            const username = document.getElementById('user-email-target').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const messageElement = document.getElementById('saldo-message');
+            messageElement.textContent = '';
 
-    // Mostrar nombre admin arriba
-    document.getElementById('admin-name-display').textContent = localStorage.getItem('currentUser') || 'Admin';
+            try {
+                const usersCol = collection(db, "users");
+                const userQuery = await getDocs(usersCol);
+                let targetUid = null;
 
-    // GESTIÓN SALDO
-    window.applyBalance = async (e) => {
-      e.preventDefault();
-      const target = document.getElementById('user-target').value.trim();
-      const amount = parseFloat(document.getElementById('amount').value);
-      const msg = document.getElementById('balance-msg');
-      msg.textContent = '';
+                userQuery.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.username === username) {
+                        targetUid = docSnap.id;
+                    }
+                });
 
-      if (!target) { msg.textContent = 'Ingresa usuario o correo.'; return; }
-      try {
-        const usersRef = collection(db, 'users');
-        // buscar por username
-        let foundId = null;
-        const q1 = query(usersRef, where('username','==', target));
-        const s1 = await getDocs(q1);
-        if (!s1.empty) s1.forEach(d => foundId = d.id);
+                if (targetUid) {
+                    const userRef = doc(db, "users", targetUid);
+                    await updateDoc(userRef, { saldo: amount });
+                    messageElement.textContent = `✅ Saldo de $${amount.toFixed(2)} USD aplicado a ${username}.`;
+                } else {
+                    messageElement.textContent = `❌ Error: Usuario con nombre ${username} no encontrado.`;
+                }
 
-        if (!foundId) {
-          // buscar por email
-          const q2 = query(usersRef, where('email','==', target));
-          const s2 = await getDocs(q2);
-          if (!s2.empty) s2.forEach(d => foundId = d.id);
-        }
+            } catch (error) {
+                messageElement.textContent = '❌ Error al aplicar saldo: ' + error.message;
+            }
+        };
+        
+        // --- SECCIÓN 2: CREAR PUBLICACIÓN ---
+        window.createPost = async (event) => {
+            event.preventDefault();
+            const title = document.getElementById('post-title').value;
+            const imageUrl = document.getElementById('post-link').value;
+            const description = document.getElementById('post-desc').value;
+            const messageElement = document.getElementById('post-message');
+            messageElement.textContent = '';
+            
+            const options = [];
+            let validOptions = true;
+            document.querySelectorAll('.option-group').forEach(group => {
+                const precio = group.querySelector('.option-precio').value;
+                const uso = group.querySelector('.option-uso').value;
+                if (precio && uso) {
+                    options.push({ precio: parseFloat(precio).toFixed(2), uso: uso });
+                } else if (precio || uso) {
+                     validOptions = false;
+                }
+            });
+            
+            if (!validOptions) {
+                messageElement.textContent = '❌ Por favor, complete o elimine las opciones de precio incompletas.';
+                return;
+            }
 
-        if (!foundId) { msg.textContent = 'Usuario no encontrado.'; return; }
+            try {
+                await addDoc(collection(db, "posts"), {
+                    title: title,
+                    imageUrl: imageUrl,
+                    description: description,
+                    options: options,
+                    createdAt: new Date()
+                });
+                messageElement.textContent = '✅ ¡Publicación creada exitosamente!';
+                document.getElementById('create-post-form').reset();
+                document.getElementById('options-container').innerHTML = '';
+            } catch (error) {
+                messageElement.textContent = '❌ Error al crear publicación: ' + error.message;
+            }
+        };
+        
+        // --- GESTIÓN DINÁMICA DE OPCIONES ---
+        window.addOption = () => {
+            const container = document.getElementById('options-container');
+            container.innerHTML += `
+                <div class="option-group">
+                    <input type="number" class="option-precio" placeholder="Precio USD" min="0" step="0.01" required>
+                    <input type="text" class="option-uso" placeholder="Uso (Ej: Disp: 5, Uso Diario)" required>
+                    <button type="button" class="remove-option-btn admin-btn" onclick="this.parentElement.remove()">X</button>
+                </div>
+            `;
+        };
+    </script>
+    
+    <div class="section">
+        <h2><i class="fas fa-hand-holding-usd"></i> Administrar Saldo de Socios</h2>
+        <form onsubmit="applyBalance(event)">
+            <label for="user-email-target">Nombre de usuario del socio:</label>
+            <input type="text" id="user-email-target" placeholder="Ej: usuario123" required>
 
-        await updateDoc(doc(db,'users',foundId), { saldo: amount });
-        msg.textContent = `Saldo actualizado a $${amount.toFixed(2)} USD.`;
-        loadUsers();
-      } catch (err) {
-        console.error(err);
-        msg.textContent = 'Error al actualizar saldo.';
-      }
-    };
+            <label for="amount">Saldo Total a establecer (USD):</label>
+            <input type="number" id="amount" step="0.01" min="0" required>
+            
+            <button type="submit" class="admin-btn"><i class="fas fa-wallet"></i> Establecer Saldo</button>
+            <div id="saldo-message" class="message"></div>
+        </form>
+    </div>
 
-    // CREAR PUBLICACIONES
-    window.createPost = async (e) => {
-      e.preventDefault();
-      const title = document.getElementById('post-title').value.trim();
-      const imageUrl = document.getElementById('post-link').value.trim();
-      const desc = document.getElementById('post-desc').value.trim();
-      const msg = document.getElementById('post-msg');
-      msg.textContent = '';
+    <div class="section">
+        <h2><i class="fas fa-bullhorn"></i> Crear Nueva Publicación</h2>
+        <form id="create-post-form" onsubmit="createPost(event)">
+            <label for="post-title">Título:</label>
+            <input type="text" id="post-title" required>
 
-      // recolectar opciones
-      const options = [];
-      document.querySelectorAll('.option-row').forEach(row => {
-        const precio = row.querySelector('.option-precio').value;
-        const uso = row.querySelector('.option-uso').value;
-        if (precio && uso) options.push({ precio: parseFloat(precio).toFixed(2), uso });
-      });
+            <label for="post-link">Foto (Link/URL):</label>
+            <input type="url" id="post-link" required>
 
-      try {
-        await addDoc(collection(db,'posts'), {
-          title, imageUrl, description: desc, options, createdAt: new Date()
-        });
-        msg.textContent = 'Publicación creada.';
-        document.getElementById('post-form').reset();
-        document.getElementById('options-container').innerHTML = '';
-        loadUsers();
-      } catch (err) {
-        console.error(err);
-        msg.textContent = 'Error creando publicación.';
-      }
-    };
+            <label for="post-desc">Descripción:</label>
+            <textarea id="post-desc" rows="3"></textarea>
 
-    // Añadir opción UI
-    window.addOption = () => {
-      const c = document.getElementById('options-container');
-      const div = document.createElement('div');
-      div.className = 'option-row';
-      div.style.display = 'flex'; div.style.gap = '8px'; div.style.marginBottom = '8px';
-      div.innerHTML = `
-        <input class="option-precio" type="number" placeholder="Precio USD" min="0" step="0.01" style="flex:1" />
-        <input class="option-uso" type="text" placeholder="Uso (Ej: Disp:5)" style="flex:2" />
-        <button type="button" onclick="this.parentElement.remove()" style="background:#d9534f;color:#fff;border:0;padding:6px;border-radius:6px;">X</button>
-      `;
-      c.appendChild(div);
-    };
+            <h3>Opciones de Precio y Uso</h3>
+            <div id="options-container"></div>
+            
+            <button type="button" class="add-option-btn admin-btn" onclick="addOption()">
+                <i class="fas fa-plus"></i> Añadir Opción de Precio/Uso
+            </button>
 
-    // Cargar lista de usuarios
-    async function loadUsers() {
-      try {
-        const t = document.getElementById('users-tbody');
-        t.innerHTML = '';
-        const usersRef = collection(db,'users');
-        const snap = await getDocs(usersRef);
-        snap.forEach(u => {
-          const d = u.data();
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${u.id}</td><td>${d.username||''}</td><td>${d.email||''}</td><td>$${(parseFloat(d.saldo||0)).toFixed(2)}</td><td>${d.isAdmin? 'SI':'NO'}</td>`;
-          t.appendChild(tr);
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // logout
-    window.logout = () => {
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('currentUserId');
-      localStorage.removeItem('isAdmin');
-      window.location.href = 'login.html';
-    };
-
-    // Inicial
-    loadUsers();
-  </script>
+            <button type="submit" class="admin-btn"><i class="fas fa-plus-circle"></i> Crear Publicación</button>
+            <div id="post-message" class="message"></div>
+        </form>
+    </div>
 </body>
 </html>
