@@ -7,38 +7,21 @@
   <title>Xits Socios - Login</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* Mantengo diseño simple y elegante (respetando tu idea original) */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg,#0072ff,#00c6ff);
-      margin: 0; min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      color: #222;
-    }
-    .container {
-      width: 95%; max-width: 420px;
-      background: #fff; padding: 28px; border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-    }
-    h1 { color:#0072ff; margin: 0 0 18px; text-align:center; }
-    .field { margin-bottom: 12px; }
-    input[type="text"], input[type="password"] {
-      width:100%; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px;
-    }
-    button.primary {
-      width:100%; padding:12px; border-radius:10px; border:0; background:#0072ff; color:#fff; font-weight:700;
-      cursor:pointer; margin-top:6px;
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#0072ff,#00c6ff); margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; color:#222; }
+    .container { width:95%; max-width:420px; background:#fff; padding:28px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,0.18); }
+    h1 { color:#0072ff; margin:0 0 18px; text-align:center; }
+    .field { margin-bottom:12px; }
+    input[type="text"], input[type="password"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
+    button.primary { width:100%; padding:12px; border-radius:10px; border:0; background:#0072ff; color:#fff; font-weight:700; cursor:pointer; margin-top:6px; }
     .toggle { margin-top:10px; text-align:center; color:#0072ff; cursor:pointer; }
     .msg { margin-top:10px; text-align:center; font-weight:600; color:#d9534f; min-height:18px; }
-    .success { color: #25A85A; }
+    .success { color:#25A85A; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1><i class="fas fa-user-circle"></i> Xits Socios</h1>
 
-    <!-- Login -->
     <div id="login-block">
       <div class="field"><input id="login-username" type="text" placeholder="Usuario" /></div>
       <div class="field"><input id="login-password" type="password" placeholder="Contraseña" /></div>
@@ -47,12 +30,9 @@
       <div class="msg" id="login-msg"></div>
     </div>
 
-    <!-- Register -->
     <div id="register-block" style="display:none;">
       <div class="field"><input id="reg-username" type="text" placeholder="Usuario (ej: pepito123)" /></div>
       <div class="field"><input id="reg-password" type="password" placeholder="Contraseña (mín 6)" /></div>
-      <div class="field"><input id="reg-email" type="email" placeholder="Correo (opcional)" /></div>
-      <div class="field"><input id="reg-whatsapp" type="tel" placeholder="WhatsApp (opcional)" /></div>
       <button class="primary" onclick="registerUser()">Registrar</button>
       <p class="toggle" onclick="toggleForms(false)">¿Ya tienes cuenta? Inicia sesión</p>
       <div class="msg" id="reg-msg"></div>
@@ -61,9 +41,11 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import {
+      getFirestore, collection, query, where, getDocs, addDoc, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    // --- Pega aquí tu firebaseConfig (o deja la que ya tenías) ---
+    // <- Tu configuración original (la que tenías). Si quieres reemplazarla, pégala aquí.
     const firebaseConfig = {
       apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
       authDomain: "sociosxit-5f841.firebaseapp.com",
@@ -76,11 +58,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Admin credentials (tal y como me indicaste)
     const ADMIN_USERNAME = 'LUCK_XIT';
     const ADMIN_PASSWORD = '32199';
 
-    // UI helpers
     window.toggleForms = (showRegister) => {
       document.getElementById('login-block').style.display = showRegister ? 'none' : 'block';
       document.getElementById('register-block').style.display = showRegister ? 'block' : 'none';
@@ -88,90 +68,108 @@
       document.getElementById('reg-msg').textContent = '';
     };
 
-    // --- LOGIN ---
+    // LOGIN
     window.loginUser = async () => {
-      const u = document.getElementById('login-username').value.trim();
-      const p = document.getElementById('login-password').value;
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
       const msg = document.getElementById('login-msg');
       msg.textContent = '';
 
-      if (!u || !p) { msg.textContent = 'Completa usuario y contraseña.'; return; }
+      if (!username || !password) { msg.textContent = 'Completa usuario y contraseña.'; return; }
 
-      // Admin shortcut (según tus requisitos)
-      if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
-        // Guardamos sesión admin
-        localStorage.setItem('currentUser', u);
+      // Admin shortcut (permite admin aunque no exista en Firestore)
+      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        // marcar sesión admin
+        localStorage.setItem('currentUser', username);
         localStorage.setItem('isAdmin', 'true');
+        // Asegurar que exista doc admin en users (opcional/ idempotente)
+        try {
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('username', '==', username));
+          const snap = await getDocs(q);
+          if (snap.empty) {
+            // crear doc admin con saldo 0 e isAdmin true
+            await addDoc(usersRef, { username, password, saldo: 0, isAdmin: true });
+          } else {
+            // si existe, opcional: update isAdmin true
+            snap.forEach(async d => {
+              const ud = d.data();
+              if (!ud.isAdmin) {
+                const udocRef = doc(db, 'users', d.id);
+                await updateDocSafe(udocRef, { isAdmin: true });
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Advertencia al asegurar usuario admin:', e.message || e);
+        }
+
         window.location.href = 'admin.html';
         return;
       }
 
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', u));
+        const q = query(usersRef, where('username', '==', username));
         const snap = await getDocs(q);
         if (snap.empty) { msg.textContent = 'Usuario no encontrado.'; return; }
 
-        let matchedDoc = null;
+        let matched = null;
         snap.forEach(d => {
-          if (d.data().password === p) matchedDoc = { id: d.id, data: d.data() };
+          const data = d.data();
+          if (data.password === password) matched = { id: d.id, data };
         });
 
-        if (!matchedDoc) { msg.textContent = 'Contraseña incorrecta.'; return; }
+        if (!matched) { msg.textContent = 'Contraseña incorrecta.'; return; }
 
-        // Login OK: guardamos sesión
-        localStorage.setItem('currentUser', matchedDoc.data.username || u);
-        localStorage.setItem('currentUserId', matchedDoc.id);
-        localStorage.setItem('isAdmin', matchedDoc.data.isAdmin ? 'true' : 'false');
+        // Guardar sesión
+        localStorage.setItem('currentUser', matched.data.username);
+        localStorage.setItem('currentUserId', matched.id);
+        localStorage.setItem('isAdmin', matched.data.isAdmin ? 'true' : 'false');
 
-        // Si el doc tiene isAdmin true, enviamos al admin
-        if (matchedDoc.data.isAdmin) {
-          window.location.href = 'admin.html';
-        } else {
-          window.location.href = 'index.html';
-        }
+        if (matched.data.isAdmin) window.location.href = 'admin.html';
+        else window.location.href = 'index.html';
       } catch (err) {
         console.error(err);
         msg.textContent = 'Error al iniciar sesión.';
       }
     };
 
-    // --- REGISTRO ---
+    async function updateDocSafe(ref, data) {
+      try { await import("https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js").then(mod => mod.updateDoc(ref, data)); } catch(e){console.warn(e)}
+    }
+
+    // REGISTER (solo username + password)
     window.registerUser = async () => {
-      const u = document.getElementById('reg-username').value.trim();
-      const p = document.getElementById('reg-password').value;
-      const email = document.getElementById('reg-email').value.trim();
-      const wa = document.getElementById('reg-whatsapp').value.trim();
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
       const msg = document.getElementById('reg-msg');
       msg.textContent = '';
 
-      if (!u || !p) { msg.textContent = 'Usuario y contraseña son obligatorios.'; return; }
-      if (p.length < 6) { msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+      if (!username || !password) { msg.textContent = 'Usuario y contraseña son obligatorios.'; return; }
+      if (password.length < 6) { msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+      if (username === ADMIN_USERNAME && password !== ADMIN_PASSWORD) {
+        msg.textContent = 'Ese usuario está reservado por el administrador.'; return;
+      }
 
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', u));
+        const q = query(usersRef, where('username', '==', username));
         const snap = await getDocs(q);
         if (!snap.empty) { msg.textContent = 'Ese usuario ya existe.'; return; }
 
-        // Crear doc en Firestore
-        const newData = {
-          username: u,
-          password: p,
-          email: email || '',
-          whatsapp: wa || '',
+        const isAdmin = (username === ADMIN_USERNAME && password === ADMIN_PASSWORD);
+        const newDoc = await addDoc(usersRef, {
+          username,
+          password,
           saldo: 0,
-          isAdmin: (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) ? true : false
-        };
+          isAdmin: isAdmin ? true : false
+        });
 
-        const added = await addDoc(usersRef, newData);
-
-        msg.textContent = 'Registro exitoso. Ya puedes iniciar sesión.';
-        msg.classList.remove('error'); msg.classList.add('success');
+        msg.textContent = '✅ Registro exitoso. Ahora inicia sesión.';
+        msg.classList.add('success');
         document.getElementById('reg-username').value = '';
         document.getElementById('reg-password').value = '';
-        document.getElementById('reg-email').value = '';
-        document.getElementById('reg-whatsapp').value = '';
       } catch (err) {
         console.error(err);
         msg.textContent = 'Error al registrar usuario.';
