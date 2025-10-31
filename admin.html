@@ -1,184 +1,178 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xits Socios - Panel de Admin</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f7; margin: 0; padding: 20px; }
-        h1 { color: #0072ff; border-bottom: 2px solid #0072ff; padding-bottom: 10px; margin-bottom: 30px; font-size: 1.8em; }
-        .section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); margin-bottom: 30px; }
-        h2 { color: #333; margin-top: 0; margin-bottom: 20px; font-size: 1.4em; }
-        
-        form label { display: block; margin: 10px 0 5px; font-weight: 600; color: #555; }
-        form input[type="text"], form input[type="email"], form input[type="number"], form textarea { 
-            width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px; 
-            box-sizing: border-box;
-        }
-        form textarea { resize: vertical; max-width: 400px; }
-        
-        .admin-btn { background-color: #0072ff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; margin-top: 10px; }
-        .admin-btn:hover { background-color: #0056e6; }
-        
-        #options-container { border: 1px dashed #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
-        .option-group { display: flex; flex-wrap: wrap; margin-bottom: 10px; gap: 10px; }
-        .option-group input { flex-grow: 1; margin: 0; }
-        .remove-option-btn { background-color: #d9534f; }
-        .add-option-btn { background-color: #5cb85c; }
-        .message { margin-top: 15px; font-weight: 600; color: #0072ff; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xits Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0072ff, #00c6ff);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-        #user-list { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
-        #user-list th, #user-list td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        #user-list th { background-color: #f2f2f2; }
-    </style>
+    .login-container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #0072ff;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #0072ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #005fe6;
+    }
+
+    #message {
+      margin-top: 15px;
+      color: #0072ff;
+      font-weight: 600;
+    }
+
+    #logout-btn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: none;
+    }
+
+    #logout-btn:hover {
+      background-color: #cc0000;
+    }
+  </style>
 </head>
 <body>
+  <button id="logout-btn" onclick="logout()">Cerrar sesión</button>
 
-    <h1><i class="fas fa-tools"></i> Panel de Administración Xits Socios</h1>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, doc, updateDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-        
-        // --- CONFIGURACIÓN DE FIREBASE ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
+  <div class="login-container" id="login-container">
+    <h2><i class="fas fa-user-shield"></i> Iniciar Sesión</h2>
+    <input type="text" id="username" placeholder="Usuario" required />
+    <input type="password" id="password" placeholder="Contraseña" required />
+    <button onclick="login()">Ingresar</button>
+    <div id="message"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    // ✅ CONFIGURACIÓN FIREBASE ORIGINAL
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
       authDomain: "sociosxit-5f841.firebaseapp.com",
       projectId: "sociosxit-5f841",
       storageBucket: "sociosxit-5f841.firebasestorage.app",
       messagingSenderId: "364183519851",
       appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    };
 
-        // --- SECCIÓN 1: GESTIÓN DE SALDO DE SOCIOS ---
-        window.applyBalance = async (event) => {
-            event.preventDefault();
-            const username = document.getElementById('user-email-target').value.trim();
-            const amount = parseFloat(document.getElementById('amount').value);
-            const messageElement = document.getElementById('saldo-message');
-            messageElement.textContent = '';
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-            try {
-                const usersCol = collection(db, "users");
-                const userQuery = await getDocs(usersCol);
-                let targetUid = null;
+    const loginContainer = document.getElementById("login-container");
+    const logoutBtn = document.getElementById("logout-btn");
+    const messageEl = document.getElementById("message");
 
-                userQuery.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.username === username) {
-                        targetUid = docSnap.id;
-                    }
-                });
+    // ✅ Verificar sesión activa
+    if (localStorage.getItem("userLogged")) {
+      const user = JSON.parse(localStorage.getItem("userLogged"));
+      redirectUser(user);
+    }
 
-                if (targetUid) {
-                    const userRef = doc(db, "users", targetUid);
-                    await updateDoc(userRef, { saldo: amount });
-                    messageElement.textContent = `✅ Saldo de $${amount.toFixed(2)} USD aplicado a ${username}.`;
-                } else {
-                    messageElement.textContent = `❌ Error: Usuario con nombre ${username} no encontrado.`;
-                }
+    // ✅ Función de inicio de sesión
+    window.login = async () => {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      messageEl.textContent = "";
 
-            } catch (error) {
-                messageElement.textContent = '❌ Error al aplicar saldo: ' + error.message;
-            }
-        };
-        
-        // --- SECCIÓN 2: CREAR PUBLICACIÓN ---
-        window.createPost = async (event) => {
-            event.preventDefault();
-            const title = document.getElementById('post-title').value;
-            const imageUrl = document.getElementById('post-link').value;
-            const description = document.getElementById('post-desc').value;
-            const messageElement = document.getElementById('post-message');
-            messageElement.textContent = '';
-            
-            const options = [];
-            let validOptions = true;
-            document.querySelectorAll('.option-group').forEach(group => {
-                const precio = group.querySelector('.option-precio').value;
-                const uso = group.querySelector('.option-uso').value;
-                if (precio && uso) {
-                    options.push({ precio: parseFloat(precio).toFixed(2), uso: uso });
-                } else if (precio || uso) {
-                     validOptions = false;
-                }
-            });
-            
-            if (!validOptions) {
-                messageElement.textContent = '❌ Por favor, complete o elimine las opciones de precio incompletas.';
-                return;
-            }
+      if (!username || !password) {
+        messageEl.textContent = "Por favor ingrese usuario y contraseña.";
+        return;
+      }
 
-            try {
-                await addDoc(collection(db, "posts"), {
-                    title: title,
-                    imageUrl: imageUrl,
-                    description: description,
-                    options: options,
-                    createdAt: new Date()
-                });
-                messageElement.textContent = '✅ ¡Publicación creada exitosamente!';
-                document.getElementById('create-post-form').reset();
-                document.getElementById('options-container').innerHTML = '';
-            } catch (error) {
-                messageElement.textContent = '❌ Error al crear publicación: ' + error.message;
-            }
-        };
-        
-        // --- GESTIÓN DINÁMICA DE OPCIONES ---
-        window.addOption = () => {
-            const container = document.getElementById('options-container');
-            container.innerHTML += `
-                <div class="option-group">
-                    <input type="number" class="option-precio" placeholder="Precio USD" min="0" step="0.01" required>
-                    <input type="text" class="option-uso" placeholder="Uso (Ej: Disp: 5, Uso Diario)" required>
-                    <button type="button" class="remove-option-btn admin-btn" onclick="this.parentElement.remove()">X</button>
-                </div>
-            `;
-        };
-    </script>
-    
-    <div class="section">
-        <h2><i class="fas fa-hand-holding-usd"></i> Administrar Saldo de Socios</h2>
-        <form onsubmit="applyBalance(event)">
-            <label for="user-email-target">Nombre de usuario del socio:</label>
-            <input type="text" id="user-email-target" placeholder="Ej: usuario123" required>
+      // ✅ Si es el administrador
+      if (username === "LUCK_XIT" && password === "32199") {
+        localStorage.setItem("userLogged", JSON.stringify({ username, role: "admin" }));
+        redirectUser({ username, role: "admin" });
+        return;
+      }
 
-            <label for="amount">Saldo Total a establecer (USD):</label>
-            <input type="number" id="amount" step="0.01" min="0" required>
-            
-            <button type="submit" class="admin-btn"><i class="fas fa-wallet"></i> Establecer Saldo</button>
-            <div id="saldo-message" class="message"></div>
-        </form>
-    </div>
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        let found = false;
 
-    <div class="section">
-        <h2><i class="fas fa-bullhorn"></i> Crear Nueva Publicación</h2>
-        <form id="create-post-form" onsubmit="createPost(event)">
-            <label for="post-title">Título:</label>
-            <input type="text" id="post-title" required>
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.username === username && data.password === password) {
+            found = true;
+            localStorage.setItem("userLogged", JSON.stringify({ username, role: "user" }));
+            redirectUser({ username, role: "user" });
+          }
+        });
 
-            <label for="post-link">Foto (Link/URL):</label>
-            <input type="url" id="post-link" required>
+        if (!found) {
+          messageEl.textContent = "❌ Usuario o contraseña incorrectos.";
+        }
 
-            <label for="post-desc">Descripción:</label>
-            <textarea id="post-desc" rows="3"></textarea>
+      } catch (error) {
+        messageEl.textContent = "Error al conectar con la base de datos.";
+        console.error(error);
+      }
+    };
 
-            <h3>Opciones de Precio y Uso</h3>
-            <div id="options-container"></div>
-            
-            <button type="button" class="add-option-btn admin-btn" onclick="addOption()">
-                <i class="fas fa-plus"></i> Añadir Opción de Precio/Uso
-            </button>
+    // ✅ Redirección según el rol
+    function redirectUser(user) {
+      if (user.role === "admin") {
+        window.location.href = "admin.html";
+      } else {
+        window.location.href = "index.html";
+      }
+    }
 
-            <button type="submit" class="admin-btn"><i class="fas fa-plus-circle"></i> Crear Publicación</button>
-            <div id="post-message" class="message"></div>
-        </form>
-    </div>
+    // ✅ Cerrar sesión
+    window.logout = () => {
+      localStorage.removeItem("userLogged");
+      logoutBtn.style.display = "none";
+      window.location.href = "login.html";
+    };
+  </script>
 </body>
 </html>
