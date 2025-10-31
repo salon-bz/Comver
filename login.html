@@ -70,7 +70,7 @@
       document.getElementById('reg-msg').classList.remove('success');
     };
 
-    // FUNCIÓN DE LOGIN
+    // FUNCIÓN DE LOGIN CORREGIDA
     window.loginUser = async () => {
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
@@ -79,24 +79,28 @@
 
       if (!username || !password) { msg.textContent = 'Completa usuario y contraseña.'; return; }
 
-      // Atajo de administrador (para iniciar sesión aunque el doc no esté actualizado o exista)
+      // 1. Atajo de administrador (para iniciar sesión aunque el doc no esté actualizado o exista)
       if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         localStorage.setItem('currentUser', username);
         localStorage.setItem('isAdmin', 'true');
-        // Asegurar que el admin exista en users
+
+        // Intenta encontrar o crear el doc del admin para establecer currentUserId
         try {
           const usersRef = collection(db, 'users');
           const q = query(usersRef, where('username', '==', username));
           const snap = await getDocs(q);
           if (snap.empty) {
-            await addDoc(usersRef, { username, password, saldo: 0, isAdmin: true });
+            const newDoc = await addDoc(usersRef, { username, password, saldo: 0, isAdmin: true });
+            localStorage.setItem('currentUserId', newDoc.id);
           } else {
-             // Actualizar por si acaso no tiene el flag 'isAdmin: true'
+            // Si existe, asegúrate de que tiene el flag de admin
             snap.forEach(async d => {
-              if (d.data().password === password && !d.data().isAdmin) {
-                await updateDoc(doc(db, 'users', d.id), { isAdmin: true });
+              if (d.data().password === password) {
+                localStorage.setItem('currentUserId', d.id);
+                if (!d.data().isAdmin) {
+                   await updateDoc(doc(db, 'users', d.id), { isAdmin: true });
+                }
               }
-              localStorage.setItem('currentUserId', d.id);
             });
           }
         } catch (e) {
@@ -107,35 +111,49 @@
         return;
       }
 
-      // Login de usuario normal (busca en Firestore)
+      // 2. Login de usuario normal (busca en Firestore)
       try {
         const usersRef = collection(db, 'users');
+        // Consulta para encontrar el usuario por 'username'
         const q = query(usersRef, where('username', '==', username));
         const snap = await getDocs(q);
-        if (snap.empty) { msg.textContent = 'Usuario no encontrado.'; return; }
+
+        if (snap.empty) {
+            msg.textContent = 'Usuario no encontrado.';
+            return;
+        }
 
         let matched = null;
+        // Iterar sobre los documentos encontrados (aunque solo debería haber uno)
         snap.forEach(d => {
-          const data = d.data();
-          if (data.password === password) matched = { id: d.id, data };
+            const data = d.data();
+            // Compara la contraseña del documento
+            if (data.password === password) {
+                matched = { id: d.id, data };
+            }
         });
 
-        if (!matched) { msg.textContent = 'Contraseña incorrecta.'; return; }
+        if (!matched) {
+            msg.textContent = 'Contraseña incorrecta.';
+            return;
+        }
 
         // Guardar sesión
         localStorage.setItem('currentUser', matched.data.username);
         localStorage.setItem('currentUserId', matched.id);
         localStorage.setItem('isAdmin', matched.data.isAdmin ? 'true' : 'false');
 
+        // Redirigir
         if (matched.data.isAdmin) window.location.href = 'admin.html';
         else window.location.href = 'index.html';
+
       } catch (err) {
-        console.error(err);
-        msg.textContent = 'Error al iniciar sesión.';
+        console.error("Error en login:", err);
+        msg.textContent = 'Error al iniciar sesión. Intenta de nuevo.';
       }
     };
 
-    // FUNCIÓN DE REGISTRO
+    // FUNCIÓN DE REGISTRO (SIN CAMBIOS, YA FUNCIONABA BIEN)
     window.registerUser = async () => {
       const username = document.getElementById('reg-username').value.trim();
       const password = document.getElementById('reg-password').value;
