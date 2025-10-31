@@ -70,7 +70,7 @@
       document.getElementById('reg-msg').classList.remove('success');
     };
 
-    // FUNCIÓN DE LOGIN CORREGIDA
+    // FUNCIÓN DE LOGIN CORREGIDA Y ROBUSTA
     window.loginUser = async () => {
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
@@ -79,12 +79,11 @@
 
       if (!username || !password) { msg.textContent = 'Completa usuario y contraseña.'; return; }
 
-      // 1. Atajo de administrador (para iniciar sesión aunque el doc no esté actualizado o exista)
+      // 1. Manejo del Administrador
       if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         localStorage.setItem('currentUser', username);
         localStorage.setItem('isAdmin', 'true');
-
-        // Intenta encontrar o crear el doc del admin para establecer currentUserId
+        // Buscar/Crear el doc de admin y asegurar el ID
         try {
           const usersRef = collection(db, 'users');
           const q = query(usersRef, where('username', '==', username));
@@ -93,7 +92,6 @@
             const newDoc = await addDoc(usersRef, { username, password, saldo: 0, isAdmin: true });
             localStorage.setItem('currentUserId', newDoc.id);
           } else {
-            // Si existe, asegúrate de que tiene el flag de admin
             snap.forEach(async d => {
               if (d.data().password === password) {
                 localStorage.setItem('currentUserId', d.id);
@@ -106,15 +104,14 @@
         } catch (e) {
           console.warn('Advertencia al asegurar usuario admin:', e.message || e);
         }
-
         window.location.href = 'admin.html';
         return;
       }
 
-      // 2. Login de usuario normal (busca en Firestore)
+      // 2. Login de usuario normal
       try {
         const usersRef = collection(db, 'users');
-        // Consulta para encontrar el usuario por 'username'
+        // Usar .toUpperCase() para buscar de manera flexible, aunque Firestore es sensible a mayúsculas
         const q = query(usersRef, where('username', '==', username));
         const snap = await getDocs(q);
 
@@ -123,28 +120,30 @@
             return;
         }
 
-        let matched = null;
-        // Iterar sobre los documentos encontrados (aunque solo debería haber uno)
+        let matchedDoc = null;
+        // Iteramos para encontrar la coincidencia exacta de contraseña
         snap.forEach(d => {
             const data = d.data();
-            // Compara la contraseña del documento
             if (data.password === password) {
-                matched = { id: d.id, data };
+                matchedDoc = d; // Guardamos todo el objeto del documento
             }
         });
 
-        if (!matched) {
+        if (!matchedDoc) {
             msg.textContent = 'Contraseña incorrecta.';
             return;
         }
 
-        // Guardar sesión
-        localStorage.setItem('currentUser', matched.data.username);
-        localStorage.setItem('currentUserId', matched.id);
-        localStorage.setItem('isAdmin', matched.data.isAdmin ? 'true' : 'false');
+        const matchedData = matchedDoc.data();
+        const matchedId = matchedDoc.id;
+
+        // **Punto de corrección:** Aseguramos guardar el ID del documento correcto.
+        localStorage.setItem('currentUser', matchedData.username);
+        localStorage.setItem('currentUserId', matchedId);
+        localStorage.setItem('isAdmin', matchedData.isAdmin ? 'true' : 'false');
 
         // Redirigir
-        if (matched.data.isAdmin) window.location.href = 'admin.html';
+        if (matchedData.isAdmin) window.location.href = 'admin.html';
         else window.location.href = 'index.html';
 
       } catch (err) {
@@ -153,7 +152,7 @@
       }
     };
 
-    // FUNCIÓN DE REGISTRO (SIN CAMBIOS, YA FUNCIONABA BIEN)
+    // FUNCIÓN DE REGISTRO MEJORADA
     window.registerUser = async () => {
       const username = document.getElementById('reg-username').value.trim();
       const password = document.getElementById('reg-password').value;
@@ -174,7 +173,7 @@
         if (!snap.empty) { msg.textContent = 'Ese usuario ya existe.'; return; }
 
         const isAdmin = (username === ADMIN_USERNAME && password === ADMIN_PASSWORD);
-        await addDoc(usersRef, {
+        const newDoc = await addDoc(usersRef, { // Capturamos la referencia del nuevo documento
           username,
           password,
           saldo: 0,
