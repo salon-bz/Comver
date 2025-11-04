@@ -1,264 +1,186 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Xits Socios - Inicio</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SociosXIT - Acceso</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+  <script src="./firebase_config.js"></script>
+
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f4f7f6; margin:0; padding-top:70px; }
-    .header { position:fixed; top:0; left:0; width:100%; background:linear-gradient(to right,#0072ff,#00c6ff); color:#fff; padding:10px 15px; box-shadow:0 2px 10px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; z-index:100; box-sizing: border-box;}
-    .header h1{font-size:1.3em;margin:0;}
-    .top-right{display:flex; align-items:center; gap:10px;}
-    .username-span{font-weight:700; color:#fff; background:rgba(255,255,255,0.08); padding:6px 10px; border-radius:8px;}
-    .logout-btn{background:#d9534f;color:#fff;border:0;padding:6px 10px;border-radius:6px;cursor:pointer;}
-    .logout-btn:hover{background:#c9302c;}
-    .container{max-width:1000px;margin:20px auto;padding:0 20px;}
-    .loading{ text-align:center; padding:50px; font-size:1.2em; color:#555; }
-    .post{ background:#fff; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.08); margin-bottom:22px; overflow:hidden; }
-    .post-image{ width:100%; height:200px; object-fit:cover; }
-    .post-content{ padding:14px; }
-    .post-content h2{ margin:0 0 6px; color:#0072ff; font-size:1.3em; }
-    .view-btn{ background:#f0ad4e; color:#fff; padding:10px; border-radius:6px; border:0; width:100%; cursor:pointer; }
-    .view-btn:hover{ background:#ec971f; }
-    .options-container{ display:none; margin-top:12px; padding:10px; border:1px solid #ddd; border-radius:6px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-    .option-button{ background:#5cb85c; color:#fff; padding:8px 12px; border-radius:6px; border:0; cursor:pointer; font-weight:600;}
-    .option-button:hover{ background:#449d44; }
-    @media (max-width:600px){ body{padding-top:100px;} .header{flex-direction:column;align-items:flex-start;} .top-right{margin-top:5px;} }
-    /* modal simple */
-    .modal { position: fixed; inset: 0; display: none; align-items:center; justify-content:center; background: rgba(0,0,0,0.5); z-index:9999; }
-    .modal .card { background:#fff; padding:20px; border-radius:10px; width:90%; max-width:420px; text-align:center; }
-    .btn-close { background:#0072ff; color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
-    .btn-close:hover { background:#0056e6; }
+    /* Fondo animado con colores vivos */
+    body {
+      background: linear-gradient(135deg, #ff0080, #7928ca, #2af598);
+      background-size: 400% 400%;
+      animation: bgMove 10s ease infinite;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    @keyframes bgMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Tarjeta principal */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: 90%;
+      max-width: 400px;
+    }
+
+    /* Estilos de neón para los botones */
+    .neon-button {
+      background-color: #ff0080;
+      box-shadow: 0 0 5px #ff0080, 0 0 10px #ff0080, 0 0 20px #ff0080;
+      transition: all 0.3s ease;
+    }
+
+    .neon-button:hover {
+      background-color: #e60073;
+      box-shadow: 0 0 10px #ff0080, 0 0 30px #ff0080, 0 0 50px #ff0080;
+    }
+
+    /* Transiciones de vista */
+    .view {
+      transition: opacity 0.4s ease-in-out;
+    }
   </style>
 </head>
-<body>
+<body class="text-white">
+
+  <div id="mainCard" class="card">
+    <h1 class="text-3xl font-bold text-center mb-6 text-white">SociosXIT</h1>
+    
+    <div id="registerView" class="view">
+      <h2 class="text-xl font-semibold mb-4 text-center">Registro</h2>
+      <input id="regUser" type="text" placeholder="Usuario" class="w-full p-3 mb-4 bg-white/10 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#7928ca] placeholder-white/70" />
+      <input id="regPass" type="password" placeholder="Contraseña" class="w-full p-3 mb-4 bg-white/10 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#7928ca] placeholder-white/70" />
+      <button id="registerBtn" class="neon-button w-full p-3 rounded font-bold text-lg mb-4">Registrarse</button>
+      <div class="text-center text-sm">
+        ¿Ya tienes cuenta? <a href="#" onclick="show('loginView')" class="text-[#2af598] hover:underline font-medium">Iniciar Sesión</a>
+      </div>
+    </div>
+    
+    <div id="loginView" class="view hidden">
+      <h2 class="text-xl font-semibold mb-4 text-center">Iniciar Sesión</h2>
+      <input id="loginUser" type="text" placeholder="Usuario" class="w-full p-3 mb-4 bg-white/10 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#7928ca] placeholder-white/70" />
+      <input id="loginPass" type="password" placeholder="Contraseña" class="w-full p-3 mb-4 bg-white/10 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#7928ca] placeholder-white/70" />
+      <button id="loginBtn" class="neon-button w-full p-3 rounded font-bold text-lg mb-4">Acceder</button>
+      <div class="text-center text-sm">
+        ¿No tienes cuenta? <a href="#" onclick="show('registerView')" class="text-[#2af598] hover:underline font-medium">Registrarse</a>
+      </div>
+    </div>
+    
+    <div id="verifyView" class="view hidden">
+      <h2 class="text-xl font-semibold mb-4 text-center">Verificación de Código</h2>
+      <p class="text-sm mb-4 text-center text-white/80">Ingresa el código que te ha proporcionado un administrador.</p>
+      <input id="verifyCode" type="text" placeholder="Código de verificación" class="w-full p-3 mb-4 bg-white/10 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#ff0080] placeholder-white/70" />
+      <button id="verifyBtn" class="neon-button w-full p-3 rounded font-bold text-lg mb-4">Verificar</button>
+    </div>
+
+  </div>
+
   <script>
-    const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) { window.location.href = 'login.html'; }
+    // --- LÓGICA DE LA APP ---
+
+    // La variable 'db' ahora viene del archivo firebase_config.js
+    const usersRef = db.ref("users");
+
+    // Función para mostrar la vista
+    function show(viewId) {
+      document.querySelectorAll(".view").forEach(el => {
+        el.classList.add("hidden");
+      });
+      document.getElementById(viewId).classList.remove("hidden");
+    }
+
+    // Comprueba si ya hay un usuario logueado al cargar
+    if (sessionStorage.getItem("sociosxit_user")) {
+        window.location.href = "dashboard.html";
+    }
+
+    // Registro
+    document.getElementById("registerBtn").onclick = async () => {
+      const user = regUser.value.trim();
+      const pass = regPass.value.trim();
+      if (!user || !pass) return alert("Completa todos los campos");
+      if (user.length < 4 || pass.length < 6) return alert("Usuario min 4, Contraseña min 6");
+
+      const snap = await usersRef.child(user).once("value");
+      if (snap.exists()) return alert("El usuario ya existe");
+
+      await usersRef.child(user).set({
+        password: pass,
+        verified: false,
+        created: new Date().toISOString()
+      });
+
+      alert("Registro exitoso. Ahora verifica tu cuenta con un código.");
+      show("verifyView");
+    };
+
+    // Verificación
+    document.getElementById("verifyBtn").onclick = async () => {
+      const code = verifyCode.value.trim();
+      const user = regUser.value.trim() || loginUser.value.trim(); // Toma el usuario del registro o login
+      
+      if (!user) return alert("Error: No se ha detectado el usuario para verificar.");
+
+      const codeRef = db.ref("codes/available/" + code);
+      const snap = await codeRef.once("value");
+
+      if (!snap.exists()) return alert("Código inválido o usado");
+      
+      // Marca el código como usado (o lo elimina)
+      await codeRef.remove(); 
+      
+      // Verifica al usuario
+      await usersRef.child(user).update({ verified: true });
+      
+      // Guarda y redirige
+      sessionStorage.setItem("sociosxit_user", user); 
+      window.location.href = "dashboard.html"; 
+    };
+
+    // Login
+    document.getElementById("loginBtn").onclick = async () => {
+      const user = loginUser.value.trim();
+      const pass = loginPass.value.trim();
+      
+      const snap = await usersRef.child(user).once("value");
+      
+      if (!snap.exists() || snap.val().password !== pass) return alert("Datos incorrectos");
+      
+      // Si existe pero no está verificado
+      if (!snap.val().verified) {
+        // Asegúrate de que loginUser tiene el valor para que 'verifyBtn' pueda usarlo
+        loginUser.value = user; 
+        return show("verifyView");
+      }
+      
+      // Si está verificado
+      sessionStorage.setItem("sociosxit_user", user); 
+      window.location.href = "dashboard.html"; 
+    };
   </script>
 
-  <div class="header">
-    <h1><i class="fas fa-gem"></i> Xits Socios</h1>
-    <div class="top-right">
-      <span class="username-span" id="display-username">Cargando...</span>
-      <span id="display-balance" style="font-weight:700; color:#fff;">Saldo: $0.00</span>
-      <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
-    </div>
-  </div>
-
-  <div class="container" id="posts-container"><div class="loading">Cargando publicaciones...</div></div>
-
-  <div id="modal" class="modal" style="display:none;">
-    <div class="card">
-      <h3>✅ Key entregada</h3>
-      <p id="modal-info" style="font-style:italic; color:#666;"></p>
-      <p id="modal-key" style="word-break:break-all; font-weight:700; font-size:1.1em; color:#25A85A; border:1px dashed #25A85A; padding:10px; border-radius:6px;"></p>
-      <p style="font-size:0.9em;">¡Guárdala bien!</p>
-      <button class="btn-close" onclick="closeModal()">Cerrar</button>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import {
-      getFirestore, collection, getDocs, doc, getDoc, updateDoc, addDoc
-    } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-    // Reemplaza con tu configuración REAL de Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyAcbewB4Orpx4JyaXq141GgUidJbXUrEnY",
-      authDomain: "sociosxit-5f841.firebaseapp.com",
-      projectId: "sociosxit-5f841",
-      storageBucket: "sociosxit-5f841.firebasestorage.app",
-      messagingSenderId: "364183519851",
-      appId: "1:364183519851:web:52a5a95d2c57f8f9f5e72e"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const currentUser = localStorage.getItem('currentUser');
-    let currentUserId = localStorage.getItem('currentUserId'); // Usaremos 'let' para poder actualizarlo
-
-    const displayUsername = document.getElementById('display-username');
-    const displayBalance = document.getElementById('display-balance');
-    const postsContainer = document.getElementById('posts-container');
-
-    // Cargar datos del usuario (saldo y nombre)
-    async function loadUserInfo() {
-      try {
-        if (!currentUserId) {
-           // Si no tenemos ID, buscamos por username (esto solo debería pasar si el localStorage se borró parcialmente)
-          const usersCol = collection(db, 'users');
-          const q = query(usersCol, where('username', '==', currentUser));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            snap.forEach(d => {
-              currentUserId = d.id;
-              localStorage.setItem('currentUserId', d.id);
-            });
-          }
-        }
-
-        if (currentUserId) {
-          const uSnap = await getDoc(doc(db, 'users', currentUserId));
-          if (uSnap.exists()) {
-            const d = uSnap.data();
-            displayUsername.textContent = d.username || currentUser;
-            displayBalance.textContent = `Saldo: $${(parseFloat(d.saldo || 0)).toFixed(2)} USD`;
-            return;
-          }
-        }
-
-        displayUsername.textContent = currentUser; // Fallback si no encuentra el doc
-        displayBalance.textContent = `Saldo: $0.00 USD`;
-
-      } catch (err) { console.error('Error cargando usuario', err); displayUsername.textContent = currentUser; }
-    }
-
-    // Cargar las publicaciones disponibles
-    async function loadPosts() {
-      postsContainer.innerHTML = '';
-      try {
-        const postsCol = collection(db, 'posts');
-        const snap = await getDocs(postsCol);
-        if (snap.empty) {
-          postsContainer.innerHTML = '<div class="loading">No hay publicaciones disponibles.</div>';
-          return;
-        }
-        snap.forEach(docItem => {
-          const p = docItem.data();
-          postsContainer.innerHTML += createPostHTML(docItem.id, p);
-        });
-      } catch (err) {
-        console.error(err);
-        postsContainer.innerHTML = '<div class="loading">Error cargando publicaciones.</div>';
-      }
-    }
-
-    // Generar el HTML para cada publicación
-    function createPostHTML(id, post) {
-      let optionsHTML = '';
-      if (post.options && Array.isArray(post.options) && post.options.length) {
-        post.options.forEach((opt, idx) => {
-          const availableKeys = Array.isArray(opt.keys) ? opt.keys.length : 0;
-          const disabledAttr = availableKeys === 0 ? 'disabled' : '';
-          const buttonText = availableKeys > 0 ?
-            `$${Number(opt.precio).toFixed(2)} - ${opt.nombre || 'Opción'} (${availableKeys} disp.)` :
-            `AGOTADO - ${opt.nombre || 'Opción'}`;
-
-          optionsHTML += `
-            <button class="option-button" onclick="buyService('${id}', ${idx})" ${disabledAttr}>
-              ${buttonText}
-            </button>
-          `;
-        });
-      } else {
-        optionsHTML = '<p style="color:#666; font-size:0.9em;">Sin opciones disponibles.</p>';
-      }
-
-      return `
-        <div class="post">
-          <img src="${post.imageUrl || 'https://via.placeholder.com/1000x400'}" class="post-image" alt="${post.title || 'Publicación'}" />
-          <div class="post-content">
-            <h2>${post.title || 'Título sin nombre'}</h2>
-            <p style="font-size:0.95em; color:#555;">${post.description || ''}</p>
-            <button class="view-btn" onclick="toggleOptions('${id}')">Ver Opciones de Compra</button>
-            <div id="options-${id}" class="options-container">${optionsHTML}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    window.toggleOptions = (id) => {
-      const el = document.getElementById('options-' + id);
-      if (!el) return;
-      el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-    };
-
-    // FUNCIÓN DE COMPRA
-    window.buyService = async (postId, optionIndex) => {
-      if (!currentUserId) { alert('Error de sesión. Por favor, reinicia la página.'); return; }
-      if (!confirm('¿Confirmar la compra de este servicio/producto?')) return;
-
-      try {
-        // 1. Obtener datos de usuario y post
-        const userRef = doc(db, 'users', currentUserId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) { alert('Usuario no encontrado en la base de datos.'); return; }
-        const userData = userSnap.data();
-        const saldoActual = parseFloat(userData.saldo || 0);
-
-        const postRef = doc(db, 'posts', postId);
-        const postSnap = await getDoc(postRef);
-        if (!postSnap.exists()) { alert('Producto no encontrado.'); return; }
-        const postData = postSnap.data();
-        const option = postData.options && postData.options[optionIndex];
-        if (!option) { alert('Opción inválida.'); return; }
-
-        const price = parseFloat(option.precio || 0);
-        if (isNaN(price) || price <= 0) { alert('Precio inválido para la opción.'); return; }
-
-        // 2. Chequeo de saldo y keys
-        if (saldoActual < price) { alert('Saldo insuficiente. Por favor, recarga.'); return; }
-
-        const keysArr = Array.isArray(option.keys) ? [...option.keys] : [];
-        if (keysArr.length === 0) { alert('No hay keys disponibles para esta opción. Contacta al administrador.'); return; }
-
-        // 3. Procesar compra: Extraer key y actualizar post
-        const deliveredKey = keysArr.shift(); // Saca la primera key del array (FIFO)
-        const newOptions = postData.options.map((op, i) => {
-          if (i === optionIndex) { return { ...op, keys: keysArr }; } // Actualiza el array de keys
-          return op;
-        });
-
-        // 4. Actualizar Firestore
-        await updateDoc(postRef, { options: newOptions });
-        const newSaldo = parseFloat((saldoActual - price).toFixed(2));
-        await updateDoc(userRef, { saldo: newSaldo });
-
-        // 5. Registrar compra en la colección 'purchases'
-        await addDoc(collection(db, 'purchases'), {
-          userId: currentUserId,
-          username: currentUser,
-          postId,
-          optionName: option.nombre || 'Sin nombre',
-          price,
-          keyDelivered: deliveredKey,
-          createdAt: new Date().toISOString()
-        });
-
-        // 6. Actualizar UI y mostrar modal
-        displayBalance.textContent = `Saldo: $${newSaldo.toFixed(2)} USD`;
-        showModal(deliveredKey, `Compra: ${postData.title} - ${option.nombre || 'Opción'}`);
-        await loadPosts(); // Recargar posts para reflejar las keys restantes.
-
-      } catch (err) {
-        console.error('Error al comprar:', err);
-        alert('Ocurrió un error al procesar la compra. Revisa la consola para más detalles.');
-      }
-    };
-
-    // Modal helpers
-    function showModal(key, info) {
-      document.getElementById('modal-key').textContent = key;
-      document.getElementById('modal-info').textContent = info || '';
-      const modal = document.getElementById('modal');
-      modal.style.display = 'flex';
-    }
-    window.closeModal = () => { document.getElementById('modal').style.display = 'none'; }
-
-    // Función de Logout
-    window.logout = () => {
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('currentUserId');
-      localStorage.removeItem('isAdmin');
-      window.location.href = 'login.html';
-    };
-
-    // Inicial
-    (async ()=> { await loadUserInfo(); await loadPosts(); })();
-  </script>
 </body>
 </html>
