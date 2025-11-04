@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - SociosXIT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+  <script src="./firebase_config.js"></script>
+
+  <style>
+    /* === TU DISEÑO ORIGINAL (sin tocar la lógica) === */
+    :root{
+      --neon-cyan: #00f0ff;
+      --neon-pink: #ff4df0;
+      --neon-green: #00ff88;
+      --neon-yellow: #ffd460;
+      --glass-bg: rgba(255,255,255,0.04);
+      /* COLORES PARA LA BARRA DE PROGRESO */
+      --level-base: rgba(255,255,255,0.1);
+      --level-vip: #00f0ff; /* VIP: Cian */
+      --level-premium: #ff4df0; /* Premium: Rosa */
+    }  html,body{height:100%;}
+
+body {
+  background: linear-gradient(135deg, #0f0812 10%, #141225 50%, #1b1236 100%);
+  color: white;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+}
+
+.card-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.small-muted {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Estilos de neón para el título */
+.neon-title {
+  text-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan), 0 0 15px var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+/* Estilos de la barra de progreso */
+.progress-bar-base {
+  background-color: var(--level-base);
+  border-radius: 9999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease-out;
+}
+
+.level-vip .progress-fill { background-color: var(--level-vip); }
+.level-premium .progress-fill { background-color: var(--level-premium); }
+
+.mono {
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+  </style>
+</head>
+<body>
+
+  <header class="text-center mb-10">
+    <h1 class="text-4xl font-extrabold neon-title">Dashboard SociosXIT</h1>
+    <p id="welcomeMessage" class="mt-2 text-xl text-white/80"></p>
+  </header>
+
+  <main class="max-w-4xl mx-auto">
+    
+    <div id="profileSection" class="card-glass p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4 text-white">Mi Nivel</h2>
+      <div class="flex items-center space-x-4">
+        <div class="flex-shrink-0">
+          <img src="https://i.imgur.com/gK1qWwG.png" alt="Icono de Perfil" class="w-12 h-12 rounded-full border-2 border-neon-cyan">
+        </div>
+        <div class="flex-grow">
+          <p id="currentLevelText" class="text-lg font-bold mb-1"></p>
+          <div class="progress-bar-base">
+            <div id="progressBarFill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <p id="progressInfo" class="text-sm mt-1 small-muted"></p>
+        </div>
+        <div class="flex-shrink-0">
+            <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                Cerrar Sesión
+            </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex flex-col md:flex-row gap-4 mb-6">
+      <input type="text" id="searchInput" placeholder="Buscar por título o key..." class="flex-grow p-3 card-glass bg-white/5 focus:outline-none focus:ring-2 focus:ring-neon-cyan placeholder-white/50 rounded" />
+      <select id="filterSelect" class="p-3 card-glass bg-white/5 focus:outline-none focus:ring-2 focus:ring-neon-cyan rounded">
+        <option value="all">Todas las compras</option>
+        <option value="premium">Solo Premium</option>
+        <option value="vip">Solo VIP</option>
+      </select>
+    </div>
+
+    <div id="myKeysList" class="space-y-4">
+      <p id="loadingMessage" class="text-center text-lg mt-10">Cargando tus compras...</p>
+    </div>
+
+  </main>
+  
+  <footer class="text-center mt-10 small-muted">
+    <p>&copy; 2024 SociosXIT. Todos los derechos reservados.</p>
+  </footer>
+
+  <script>
+    // --- LÓGICA DE LA APP ---
+    
+    // Las variables 'db' y 'user' ahora están disponibles globalmente desde firebase_config.js
+    const user = sessionStorage.getItem("sociosxit_user");
+
+    // Redirige si no hay sesión
+    if (!user) {
+        window.location.href = "index.html";
+    }
+
+    // Referencias
+    const usersRef = db.ref("users");
+    const myKeysList = document.getElementById("myKeysList");
+    const searchInput = document.getElementById("searchInput");
+    const filterSelect = document.getElementById("filterSelect");
+
+    let allPurchases = []; // Almacena todas las compras
+
+    // 1. Cargar datos del usuario y sus compras
+    usersRef.child(user).once("value", (snapshot) => {
+        const userData = snapshot.val();
+        
+        document.getElementById("welcomeMessage").textContent = `¡Bienvenido, ${user}!`;
+        
+        // Carga y procesa las compras
+        if (userData && userData.purchases) {
+            allPurchases = Object.keys(userData.purchases).map(key => ({
+                key,
+                ...userData.purchases[key],
+                date: userData.purchases[key].date || 'Fecha desconocida'
+            }));
+            
+            // Ordenar de más reciente a más antigua
+            allPurchases.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            renderPurchases(); // Renderiza por primera vez
+            updateProfile(allPurchases); // Actualiza el perfil
+        } else {
+            document.getElementById("loadingMessage").textContent = "No tienes compras registradas.";
+        }
+    });
+
+    // 2. Función para actualizar el perfil de nivel
+    function updateProfile(purchases) {
+        const totalKeys = purchases.length;
+        let level = "Base";
+        let nextLevel = "VIP";
+        let keysForNext = 5; 
+        
+        // Lógica de Niveles (ejemplo)
+        if (totalKeys >= 5 && totalKeys < 10) {
+            level = "VIP";
+            nextLevel = "Premium";
+            keysForNext = 10;
+        } else if (totalKeys >= 10) {
+            level = "Premium";
+            nextLevel = "MÁXIMO";
+            keysForNext = totalKeys; // Ya alcanzó el máximo, no hay siguiente
+        }
+
+        let progress = (totalKeys / keysForNext) * 100;
+        if (level === "Premium") {
+            progress = 100;
+        } else if (progress > 100) {
+            progress = 100;
+        }
+
+        const progressBarFill = document.getElementById("progressBarFill");
+        const currentLevelText = document.getElementById("currentLevelText");
+        const progressInfo = document.getElementById("progressInfo");
+        const profileSection = document.getElementById("profileSection");
+        
+        // Texto y colores del nivel
+        currentLevelText.textContent = `Nivel Actual: ${level}`;
+        profileSection.classList.remove("level-vip", "level-premium");
+
+        if (level === "VIP") {
+            profileSection.classList.add("level-vip");
+            currentLevelText.style.color = "var(--level-vip)";
+            progressInfo.textContent = `Te faltan ${keysForNext - totalKeys} compras para el Nivel ${nextLevel}.`;
+        } else if (level === "Premium") {
+            profileSection.classList.add("level-premium");
+            currentLevelText.style.color = "var(--level-premium)";
+            progressInfo.textContent = `¡Has alcanzado el Nivel Máximo! (Total: ${totalKeys} compras)`;
+        } else {
+            // Nivel Base
+            currentLevelText.style.color = "white";
+            progressInfo.textContent = `Te faltan ${keysForNext - totalKeys} compras para el Nivel ${nextLevel}.`;
+        }
+        
+        progressBarFill.style.width = `${progress}%`;
+    }
+
+
+    // 3. Función para renderizar la lista de compras
+    function renderPurchases() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const filterTerm = filterSelect.value;
+      
+      const filteredPurchases = allPurchases.filter(it => {
+        // Filtrar por texto
+        const searchMatch = (it.title || "").toLowerCase().includes(searchTerm) || 
+                            (it.key || "").toLowerCase().includes(searchTerm);
+        
+        // Filtrar por tipo (vip/premium/all)
+        const typeMatch = filterTerm === 'all' || 
+                          (it.optionText || "").toLowerCase().includes(filterTerm.toLowerCase());
+
+        return searchMatch && typeMatch;
+      });
+
+      myKeysList.innerHTML = '';
+      document.getElementById("loadingMessage").textContent = "";
+
+      if (filteredPurchases.length === 0) {
+          myKeysList.innerHTML = `<p class="text-center text-lg mt-10 small-muted">No se encontraron compras con los filtros aplicados.</p>`;
+          return;
+      }
+
+      filteredPurchases.forEach(it => {
+        const div = document.createElement('div');
+        div.className = 'card-glass p-4 mb-4';
+        
+        const date = new Date(it.date).toLocaleDateString('es-ES', { 
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+
+        // Lógica de Precios y Descuentos
+        const originalPrice = parseFloat(it.originalPrice || 0).toFixed(2);
+        const finalPrice = parseFloat(it.finalPrice || 0).toFixed(2);
+        const discountApplied = parseFloat(it.discountApplied || 0).toFixed(2);
+
+        let priceHTML = `<div class="font-bold text-green-400">$${finalPrice}</div>`;
+        if (discountApplied > 0.01) {
+            priceHTML = `
+              <div class="small-muted line-through text-sm">$${originalPrice}</div>
+              <div class="font-bold text-green-400">$${finalPrice}</div>
+              <div class="text-xs text-neon-cyan">(-$${discountApplied} Desc.)</div>
+            `;
+        }
+
+        div.innerHTML = `
+          <div class="flex flex-col md:flex-row justify-between items-start gap-2">
+            <div>
+              <div class="text-lg font-semibold">${it.title || "Sin título"}</div>
+              <div class="small-muted">${it.optionText || ""} • ${it.days || ""}</div>
+              <div class="small-muted mt-2">📅 ${date}</div>
+            </div>
+            <div class="text-left md:text-right">
+              ${priceHTML}
+              <div class="mono text-sm text-green-300 mt-2 break-all">${it.key}</div>
+              <button class="mt-2 bg-white text-blue-900 font-bold py-1 px-3 rounded" onclick="copiarKey('${it.key}')">Copiar</button>
+            </div>
+          </div>`;
+        myKeysList.appendChild(div);
+      });
+    }
+
+    // 4. Funcionalidad de Búsqueda y Filtro
+    searchInput.oninput = renderPurchases;
+    filterSelect.onchange = renderPurchases;
+
+    // 5. Función de Copiar Key
+    function copiarKey(key) {
+        navigator.clipboard.writeText(key).then(() => {
+            alert(`Key copiada: ${key}`);
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+            alert('Error al copiar. Intenta copiarlo manualmente.');
+        });
+    }
+    
+    // 6. Funcionalidad de Cerrar Sesión
+    document.getElementById("logoutBtn").onclick = () => {
+        sessionStorage.removeItem("sociosxit_user"); 
+        window.location.href = "index.html"; 
+    };
+
+    // Exporta la función al ámbito global para que el botón HTML la use
+    window.copiarKey = copiarKey;
+  </script>
+
+</body>
+</html>
